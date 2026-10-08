@@ -14,7 +14,14 @@ function coordinate(item: TourRecord, field: string, max: number) {
 }
 export function httpsImage(value?: string): string | undefined {
   if (!value) return undefined;
-  try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : undefined; }
+  try {
+    const url = new URL(value);
+    if (url.username || url.password) return undefined;
+    // 국·영문 목록/사진 표본에서 TLS·200·JPEG를 확인한 관광공사 CDN 경로만 승격한다.
+    if (url.protocol === 'http:' && url.hostname === 'tong.visitkorea.or.kr' && !url.port && !url.search && !url.hash
+      && /^\/cms\/resource\/\d+\/[A-Za-z0-9_-]+\.(?:jpe?g|png|gif|webp)$/i.test(url.pathname)) url.protocol = 'https:';
+    return url.protocol === 'https:' ? url.href : undefined;
+  }
   catch { return undefined; }
 }
 export function toPlace(item: TourRecord, language: ContentLanguage): Place {

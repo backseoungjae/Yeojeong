@@ -40,7 +40,7 @@ test('서비스마다 세 타입 변환 및 언어 간 동일 콘텐츠 ID도 �
   assert.equal(placeType('en','12'),'other');
   assert.notEqual(toPlace(fixture,'ko').id,toPlace({ ...fixture, contenttypeid: '76' },'en').id);
 });
-test('HTTP 이미지는 자동 치환하지 않고 원본과 이용 유형 보존', () => {
+test('미검증 HTTP 이미지는 치환하지 않고 원본과 이용 유형 보존', () => {
   const image = 'http://tong.visitkorea.or.kr/cms/a.jpg';
   const place = toPlace({ ...fixture, firstimage: image, cpyrhtDivCd:'Type3' },'ko');
   assert.equal(place.imageSourceUrl,image); assert.equal(place.imageUrl,undefined); assert.equal(place.imageLicense,'Type3');
@@ -106,4 +106,18 @@ test('상세 한 영역 실패 후 다른 조회 유지 및 미실행 선행조�
   assert.equal(results.find(x=>x.language==='ko'&&x.check==='cultureCommon').state,'ok');
   assert.equal(results.find(x=>x.language==='ko'&&x.check==='cultureImages').state,'empty');
   assert.equal(results.find(x=>x.language==='ko'&&x.check==='searchFiltered').state,'skipped');
+});
+
+test('검증된 관광공사 CDN 이미지 경로만 HTTPS로 표시하고 원본 보존', () => {
+  const image = 'http://tong.visitkorea.or.kr/cms/resource/28/2993428_image2_1.jpg';
+  const thumb = 'http://tong.visitkorea.or.kr/cms/resource/28/2993428_image3_1.JPG';
+  const place = toPlace({ ...fixture, firstimage: image, firstimage2: thumb, cpyrhtDivCd: 'Type3' }, 'en');
+  assert.equal(place.imageSourceUrl, image); assert.equal(place.imageUrl, image.replace('http:', 'https:'));
+  assert.equal(place.listImageUrl, thumb.replace('http:', 'https:')); assert.equal(place.imageLicense, 'Type3');
+  for (const address of [
+    'http://example.com/cms/resource/28/a.jpg', 'http://tong.visitkorea.or.kr.evil.test/cms/resource/28/a.jpg',
+    'http://tong.visitkorea.or.kr/other/a.jpg', 'http://tong.visitkorea.or.kr/cms/resource/28/a.html',
+    'http://user:pass@tong.visitkorea.or.kr/cms/resource/28/a.jpg', 'http://tong.visitkorea.or.kr:8080/cms/resource/28/a.jpg',
+    'http://tong.visitkorea.or.kr/cms/resource/28/a.jpg?redirect=x', 'http://tong.visitkorea.or.kr/cms/resource/28/a.jpg#x',
+  ]) assert.equal(httpsImage(address), undefined, address);
 });

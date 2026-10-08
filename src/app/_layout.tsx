@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { PlaceDetailProvider } from '@/features/places/hooks/PlaceDetailProvider';
 import { ExploreProvider } from '@/features/explore/hooks/ExploreProvider';
 import { StatusBar } from 'expo-status-bar';
 import { AppSettingsProvider } from '@/shared/settings/AppSettingsProvider';
@@ -27,5 +28,5 @@ function Navigation() {
   </ThemeProvider>;
 }
 export default function RootLayout() {
-  return <AppSettingsProvider><AccessibilityProvider><ExploreProvider><Navigation /></ExploreProvider></AccessibilityProvider></AppSettingsProvider>;
+  return <AppSettingsProvider><AccessibilityProvider><ExploreProvider><PlaceDetailProvider><Navigation /></PlaceDetailProvider></ExploreProvider></AccessibilityProvider></AppSettingsProvider>;
 }

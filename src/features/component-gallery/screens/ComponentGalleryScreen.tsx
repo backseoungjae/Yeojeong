@@ -1,3 +1,5 @@
+import { PlaceInfoRow } from '@/features/places/components/PlaceInfoRow';
+import { PlacePhotoGallery } from '@/features/places/components/PlacePhotoGallery';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -57,6 +59,14 @@ export default function ComponentGalleryScreen() {
         <TextField label={t('gallery.input')} placeholder={t('gallery.inputPlaceholder')} value={input} onChangeText={setInput} />
         <TextField label={t('gallery.errorInput')} error={t('gallery.inputError')} required />
         <TextField label={t('gallery.disabledInput')} editable={false} />
+      </Section>
+      <Section title={t('gallery.detailPreview')}>
+        <Text tone="muted">{t('gallery.mockNotice')}</Text>
+        <PlaceInfoRow label={t('place.description')} value={t('gallery.long')} />
+        <PlaceInfoRow label={t('place.info.hours')} value={t('gallery.long')} />
+        <PlacePhotoGallery photos={[]} />
+        <Button label={t('place.save')} disabled />
+        <Button label={t('place.addToTrip')} disabled variant="secondary" />
       </Section>
       <Section title={t('gallery.states')}>
         <Loading /><Skeleton />
