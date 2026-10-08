@@ -24,6 +24,6 @@ export function toPlace(item: TourRecord, language: ContentLanguage): Place {
     name: requiredText(item, 'title'), providerTypeCode: requiredText(item, 'contenttypeid'), type: placeType(language, requiredText(item, 'contenttypeid')),
     address: textField(item, 'addr1'), regionCode: textField(item, 'lDongRegnCd'), districtCode: textField(item, 'lDongSignguCd'),
     classification: textField(item, 'lclsSystm1'), subClassification: textField(item, 'lclsSystm2'), detailClassification: textField(item, 'lclsSystm3'), longitude: coordinate(item, 'mapx', 180), latitude: coordinate(item, 'mapy', 90),
-    imageSourceUrl: textField(item, 'firstimage'), imageUrl: httpsImage(textField(item, 'firstimage')), imageLicense: textField(item, 'cpyrhtDivCd'), modifiedAt: textField(item, 'modifiedtime'), source: '한국관광공사 TourAPI',
+    imageSourceUrl: textField(item, 'firstimage'), imageUrl: httpsImage(textField(item, 'firstimage')), listImageUrl: httpsImage(textField(item, 'firstimage2')) ?? httpsImage(textField(item, 'firstimage')), imageLicense: textField(item, 'cpyrhtDivCd'), modifiedAt: textField(item, 'modifiedtime'), source: '한국관광공사 TourAPI',
   };
 }

@@ -10,12 +10,14 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style' | 'accessib
   hint?: string;
   error?: string;
   required?: boolean;
+  fieldId?: string;
 }
-export function TextField({ label, hint, error, required = false, editable = true, ...props }: TextFieldProps) {
+export function TextField({ label, hint, error, fieldId, required = false, editable = true, ...props }: TextFieldProps) {
   const { colors, spacing, radius, typography, layout } = useTheme();
   const { t } = useI18n();
   const scale = useFontPreview();
-  const id = useId();
+  const generatedId = useId();
+  const id = fieldId ?? generatedId;
   const [focused, setFocused] = useState(false);
   const accessibleLabel = required ? t('common.required', { label }) : label;
   const inputStyle: TextStyle = { ...focusRing(focused, colors.focus, layout.focusWidth), ...typography.body, fontSize: typography.body.fontSize * scale, lineHeight: typography.body.lineHeight * scale,

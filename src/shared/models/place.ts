@@ -19,6 +19,7 @@ export interface Place {
   longitude?: number;
   latitude?: number;
   imageUrl?: string;
+  listImageUrl?: string;
   imageSourceUrl?: string;
   imageLicense?: string;
   modifiedAt?: string;
