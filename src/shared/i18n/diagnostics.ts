@@ -1,3 +1,4 @@
+import { formatNumber } from './format.ts';
 export const diagnosticsMessages = {
   ko: {
     title: 'Phase 0 · TourAPI 검증', errorSummary: '{reason} · 코드/HTTP {code}', languageLabel: '{label}: {language}', language: '화면 언어', ko: '한국어', en: 'English',
@@ -28,7 +29,7 @@ export function interpolate(message: string, values: Record<string, string | num
   return message.replace(/\{(\w+)\}/g, (match, name: string) => String(values[name] ?? match));
 }
 export function formatDiagnosticNumber(value: number, language: 'ko' | 'en') {
-  return new Intl.NumberFormat(language === 'ko' ? 'ko-KR' : 'en-US').format(value);
+  return formatNumber(value, language);
 }
 
 const checkLabels: Record<string, { ko: string; en: string }> = {

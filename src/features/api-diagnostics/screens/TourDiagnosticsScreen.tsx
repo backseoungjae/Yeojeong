@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
+import { useI18n } from '@/shared/i18n/useI18n';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
@@ -19,7 +20,7 @@ function ImageSample({ url, name, language }: { url: string; name: string; langu
   </View>;
 }
 export default function TourDiagnosticsScreen() {
-  const [language, setLanguage] = useState<ContentLanguage>('ko');
+  const { language, setLanguage } = useI18n();
   const t = diagnosticsMessages[language];
   const theme = useTheme();
   const { results, state, run, cancel, configuration } = useTourDiagnostics();
