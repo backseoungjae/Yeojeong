@@ -1,4 +1,4 @@
-export type TourErrorKind = 'configuration' | 'parameters' | 'network' | 'timeout' | 'cancelled' | 'http' | 'authentication' | 'quota' | 'api' | 'format';
+export type TourErrorKind = 'configuration' | 'parameters' | 'network' | 'timeout' | 'cancelled' | 'http' | 'authentication' | 'quota' | 'api' | 'format' | 'missing';
 export class TourError extends Error {
   readonly kind: TourErrorKind;
   readonly code?: string;

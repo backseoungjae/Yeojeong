@@ -1,4 +1,6 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { useEffect } from 'react';
+import { LocalDataProvider, useLocalData } from '@/features/settings/hooks/LocalDataProvider';
+import { router, DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { LibraryProvider } from '@/features/library/hooks/LibraryProvider';
 import { LibraryGate } from '@/features/library/components/LibraryGate';
 import { DatabaseProvider } from '@/shared/database/DatabaseProvider';
@@ -13,6 +15,8 @@ import { useTheme } from '@/shared/theme/useTheme';
 import { useI18n } from '@/shared/i18n/useI18n';
 import { AppHeader } from '@/shared/navigation/AppHeader';
 function Navigation() {
+  const { completed, error } = useLocalData();
+  useEffect(() => { if (completed || error) router.replace('/'); }, [completed, error]);
   const { colors, resolvedTheme } = useTheme();
   const { reduceMotion } = useAccessibility();
   const { t } = useI18n();
@@ -34,5 +38,5 @@ function Navigation() {
   </ThemeProvider>;
 }
 export default function RootLayout() {
-  return <DatabaseProvider><LibraryProvider><AppSettingsProvider><AccessibilityProvider><LibraryGate><TripsProvider><TripsGate><ExploreProvider><PlaceDetailProvider><Navigation /></PlaceDetailProvider></ExploreProvider></TripsGate></TripsProvider></LibraryGate></AccessibilityProvider></AppSettingsProvider></LibraryProvider></DatabaseProvider>;
+  return <DatabaseProvider><LocalDataProvider><LibraryProvider><AppSettingsProvider><AccessibilityProvider><LibraryGate><TripsProvider><TripsGate><ExploreProvider><PlaceDetailProvider><Navigation /></PlaceDetailProvider></ExploreProvider></TripsGate></TripsProvider></LibraryGate></AccessibilityProvider></AppSettingsProvider></LibraryProvider></LocalDataProvider></DatabaseProvider>;
 }

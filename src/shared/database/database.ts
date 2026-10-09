@@ -63,12 +63,22 @@ export async function migrateDatabase(db: SqlConnection) {
     catch (error) { await db.execAsync('ROLLBACK'); throw error; }
   }
 }
+export type DatabaseAccess = Pick<AppDatabase, 'read' | 'transaction'>;
 export class AppDatabase {
   private open: () => Promise<SqlConnection>;
   private ready?: Promise<SqlConnection>;
   private connection?: SqlConnection;
   private tail: Promise<void> = Promise.resolve();
+  private resetting = false;
+  private generation = 0;
   constructor(open: () => Promise<SqlConnection>) { this.open = open; }
+  forSession(): DatabaseAccess {
+    const generation = this.generation;
+    return {
+      read: work => generation === this.generation ? this.read(work) : Promise.reject(new StorageError('read')),
+      transaction: work => generation === this.generation ? this.transaction(work) : Promise.reject(new StorageError('write')),
+    };
+  }
   initialize(): Promise<SqlConnection> {
     if (!this.ready) {
       this.ready = this.open().then(async db => {
@@ -92,11 +102,21 @@ export class AppDatabase {
     return task;
   }
   read<T>(work: (db: SqlConnection) => Promise<T>): Promise<T> {
+    if (this.resetting) return Promise.reject(new StorageError('write'));
     return this.enqueue(async db => { try { return await work(db); } catch (error) { throw error instanceof RepositoryError ? error : new StorageError('read'); } });
   }
   transaction<T>(work: (db: SqlConnection) => Promise<T>): Promise<T> {
+    if (this.resetting) return Promise.reject(new StorageError('write'));
     // 모든 조회/쓰기를 한 연결의 큐로 직렬화해 다른 작업이 열린 트랜잭션에 섞이지 않도록 한다.
-    return this.enqueue(async db => {
+    return this.enqueue(db => this.commit(db, work));
+  }
+  reset(work: (db: SqlConnection) => Promise<void>, prepare: () => Promise<void>): Promise<void> {
+    if (this.resetting) return Promise.reject(new StorageError('write'));
+    // 먼저 수락한 작업을 완료한 뒤 삭제하며, 삭제 중 신규 조회/쓰기는 거부한다.
+    this.resetting = true; this.generation++;
+    return this.enqueue(async db => { await prepare(); await this.commit(db, work); }).finally(() => { this.resetting = false; });
+  }
+  private async commit<T>(db: SqlConnection, work: (db: SqlConnection) => Promise<T>): Promise<T> {
       try { await db.execAsync('BEGIN IMMEDIATE'); }
       catch { throw new StorageError('write'); }
       try { const result = await work(db); await db.execAsync('COMMIT'); return result; }
@@ -105,6 +125,5 @@ export class AppDatabase {
         catch { this.ready = undefined; await db.closeAsync().catch(() => {}); }
         throw error instanceof RepositoryError ? error : new StorageError('write');
       }
-    });
   }
 }

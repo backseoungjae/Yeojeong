@@ -1,4 +1,4 @@
-import { AppDatabase, StorageError, type SqlConnection } from '../../../shared/database/database.ts';
+import { type DatabaseAccess, StorageError, type SqlConnection } from '../../../shared/database/database.ts';
 import { writeSnapshot } from '../../../shared/database/placeSnapshots.ts';
 import { parseSnapshot } from '../../../shared/models/placeSnapshot.ts';
 import type { Place } from '../../../shared/models/place.ts';
@@ -39,7 +39,7 @@ async function normalizeOrder(db: SqlConnection, tripId: string, date: string) {
   await db.runAsync('UPDATE itinerary_items SET position=position+? WHERE trip_id=? AND date=?', offset, tripId, date);
   for (const [position, row] of rows.entries()) await db.runAsync('UPDATE itinerary_items SET position=? WHERE id=?', position, row.id);
 }
-export function createTripRepository(database: AppDatabase, now = Date.now) {
+export function createTripRepository(database: DatabaseAccess, now = Date.now) {
   return {
     load: () => database.read(load),
     create(input: TripInput) { const value = validateTrip(input); return database.transaction(async db => {

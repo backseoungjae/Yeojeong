@@ -54,6 +54,7 @@ export class ExploreStore {
     this.listeners.forEach(listener => listener());
     this.ensureLoaded();
   }
+  dispose = () => { this.generation++; this.controller?.abort(); this.snapshots.clear(); };
   retry = () => { if (!this.state.loading && !this.state.loadingNext) void this.load(this.state.page > 0); };
   loadNext = () => {
     if (this.state.hasNext && !this.state.loading && !this.state.loadingNext && !this.state.nextError) void this.load(true);

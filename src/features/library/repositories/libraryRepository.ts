@@ -1,5 +1,5 @@
 import { writeSnapshot } from '../../../shared/database/placeSnapshots.ts';
-import { AppDatabase, StorageError, type SqlConnection } from '../../../shared/database/database.ts';
+import { type DatabaseAccess, StorageError, type SqlConnection } from '../../../shared/database/database.ts';
 import type { Place } from '../../../shared/models/place.ts';
 import { parseSnapshot, type LibraryData, type StoredPlace } from '../models/library.ts';
 interface SnapshotRow { id: string; service: string; content_id: string; language: string; snapshot_json: string; captured_at: number }
@@ -23,7 +23,7 @@ async function load(db: SqlConnection): Promise<LibraryData> {
   const searches = await db.getAllAsync<{ keyword: string; searched_at: number }>('SELECT keyword, searched_at FROM recent_searches ORDER BY sequence DESC, keyword LIMIT 10');
   return { saved: savedRows.map(row => toStored(row.place_id, row.saved_at)), recent: recentRows.map(row => toStored(row.place_id, row.viewed_at)), searches: searches.map(row => ({ keyword: row.keyword, searchedAt: row.searched_at })) };
 }
-export function createLibraryRepository(database: AppDatabase, now = Date.now) {
+export function createLibraryRepository(database: DatabaseAccess, now = Date.now) {
   return {
     load: () => database.read(load),
     save(place: Place) { return database.transaction(async db => {

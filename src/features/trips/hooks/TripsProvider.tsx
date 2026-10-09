@@ -5,7 +5,7 @@ import { TripStore } from '../models/tripStore';
 const TripsContext = createContext<TripStore | null>(null);
 export function TripsProvider({ children }: { children: ReactNode }) {
   const database = useAppDatabase();
-  const [store] = useState(() => new TripStore(createTripRepository(database)));
+  const [store] = useState(() => new TripStore(createTripRepository(database.forSession())));
   useEffect(() => { void store.initialize(); }, [store]);
   return <TripsContext.Provider value={store}>{children}</TripsContext.Provider>;
 }

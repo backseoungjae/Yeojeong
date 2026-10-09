@@ -11,6 +11,7 @@ export function createPlaceRepository(client: TourClient) {
   const pages = new RequestCache<PlacePage>();
   const regions = new RequestCache<Region[]>(24 * 60 * 60 * 1000, 50);
   return {
+    dispose() { pages.clear(); regions.clear(); },
     cachedPage(language: ContentLanguage, conditions: ExploreConditions, page: number) { return pages.read(queryKey(language, conditions, page)); },
     page(language: ContentLanguage, value: ExploreConditions, page: number, signal?: AbortSignal): Promise<PlacePage> {
       const conditions = normalizeConditions(value);

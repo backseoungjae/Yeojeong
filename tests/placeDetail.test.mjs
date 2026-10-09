@@ -74,7 +74,7 @@ test('빈 사진·이용 정보는 정상, 사진 페이지 중복 제거 및 �
     return response([]);
   }));
   assert.equal((await repository.photos(ko)).length, 1); assert.deepEqual(await repository.info(ko, detail), []);
-  await assert.rejects(repository.basic(ko), { kind: 'format' });
+  await assert.rejects(repository.basic(ko), { kind: 'missing' });
   const wrong = createPlaceDetailRepository(createTourClient({ common: 'mock-key' }, async () => response([{ contentid: '999', originimgurl: 'https://example.com/a.jpg' }])));
   await assert.rejects(wrong.photos(ko), { kind: 'format' });
 });

@@ -27,11 +27,11 @@ export default function PlaceDetailScreen() {
   const detail = basic.data ?? (offline && snapshot ? { place: snapshot.place, address: snapshot.place.address } : undefined);
   return <Screen>
     <Section title={t('place.photos')}>
-      {photos.status === 'idle' || photos.status === 'loading' ? <Skeleton /> : photos.status === 'error' ? <DetailAreaError error={photos.error} onRetry={() => retry('photos')} />
+      {photos.status === 'idle' || photos.status === 'loading' ? <Skeleton /> : photos.status === 'error' ? <><DetailAreaError error={photos.error} onRetry={() => retry('photos')} /><PlacePhotoGallery key={identifier} photos={gallery} placeName={detail?.place.name} /></>
         : <PlacePhotoGallery key={identifier} photos={gallery} placeName={detail?.place.name} />}
     </Section>
     {basic.status === 'error' && <Section title={t('place.basic')}><DetailAreaError error={basic.error} onRetry={() => retry('basic')} /></Section>}
-    {offline && snapshot && <Text>{t('local.snapshotNotice', { value: formatTimestamp(snapshot.capturedAt, language) })}</Text>}
+    {offline && snapshot && <><Text>{t('local.snapshotNotice', { value: formatTimestamp(snapshot.capturedAt, language) })}</Text><Text tone="muted">{t('place.staleNotice')}</Text></>}
     {historyError && <Text tone="danger" accessibilityRole="alert">{t('local.historyError')}</Text>}
     {basic.status === 'idle' || basic.status === 'loading' ? <Skeleton /> : detail && <>
       <View style={{ gap: spacing.sm }}>
@@ -63,6 +63,8 @@ export default function PlaceDetailScreen() {
     </Section>
     <Section title={t('place.attribution')}>
       <Text>{t('explore.source')}</Text>
+      {basic.data?.checkedAt !== undefined && <Text>{t('place.checked', { value: formatTimestamp(basic.data.checkedAt, language) })}</Text>}
+      <Text tone="muted">{t('place.checkBeforeVisit')}</Text>
       {detail?.modifiedDate && <Text>{t('place.modified', { value: formatDate(detail.modifiedDate, language) })}</Text>}
     </Section>
   </Screen>;

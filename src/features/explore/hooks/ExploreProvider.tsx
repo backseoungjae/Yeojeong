@@ -13,6 +13,7 @@ export function ExploreProvider({ children }: { children: ReactNode }) {
     return { repository, store: new ExploreStore(repository, language) };
   });
   useEffect(() => { value.store.setLanguage(language); }, [value, language]);
+  useEffect(() => () => { value.store.dispose(); value.repository.dispose(); }, [value]);
   return <ExploreContext.Provider value={value}>{children}</ExploreContext.Provider>;
 }
 export function useExploreContext() {

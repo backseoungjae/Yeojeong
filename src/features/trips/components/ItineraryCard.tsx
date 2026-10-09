@@ -1,3 +1,4 @@
+import { formatTimestamp } from '@/shared/i18n/format';
 import { View } from 'react-native';
 import { useState } from 'react';
 import { useI18n } from '@/shared/i18n/useI18n';
@@ -18,6 +19,7 @@ export function ItineraryCard({ item, total, draft, busy, onMemo, onSaveMemo, on
   return <Section title={t('trip.visitOrder', { order: item.position + 1, name: item.place.name })}>
     <Text>{item.place.address ?? t('explore.regionUnknown')}</Text>
     <Text tone="muted">{t(`explore.type.${item.place.type}`)}</Text>
+    <Text variant="caption" tone="muted">{t('place.savedInfoAt', { value: formatTimestamp(item.capturedAt, language) })}</Text>
     {item.place.language !== language && <Text>{t('place.originalLanguage', { language: t(item.place.language === 'ko' ? 'settings.korean' : 'settings.english') })}</Text>}
     <Button label={t('trip.openPlace', { name: item.place.name })} variant="secondary" disabled={busy} onPress={onOpen} />
     <View style={{ gap: spacing.sm }}>

@@ -1,3 +1,4 @@
+import { formatTimestamp } from '@/shared/i18n/format';
 import { router } from 'expo-router';
 import { View } from 'react-native';
 import { useI18n } from '@/shared/i18n/useI18n';
@@ -13,6 +14,7 @@ export function StoredPlaceCard({ item }: { item: StoredPlace }) {
     {item.place.language !== language && <Text>{t('place.originalLanguage', { language: t(item.place.language === 'ko' ? 'settings.korean' : 'settings.english') })}</Text>}
     <PlaceCard place={item.place} regionLabel={item.place.address ?? t('explore.regionUnknown')}
       onPress={() => router.push({ pathname: '/places/[placeId]', params: { placeId: item.place.id } })} />
+    <Text variant="caption" tone="muted">{t('place.savedInfoAt', { value: formatTimestamp(item.capturedAt, language) })}</Text>
     <AddPlaceToTrip place={item.place} />
   </View>;
 }

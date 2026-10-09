@@ -9,5 +9,5 @@ export function parsePlaceIdentifier(value: string): PlaceIdentifier {
 }
 export type PlaceInfoKey = 'hours' | 'closed' | 'fees' | 'parking' | 'parkingFees' | 'contact' | 'reservation' | 'menu' | 'otherMenu' | 'experience' | 'season' | 'duration' | 'capacity' | 'size' | 'discount';
 export interface PlaceInfo { key: PlaceInfoKey; value: string; phoneUrl?: string }
-export interface PlaceDetail { place: Place; description?: string; address?: string; telephone?: string; phoneUrl?: string; websiteUrl?: string; modifiedDate?: string }
+export interface PlaceDetail { place: Place; checkedAt?: number; description?: string; address?: string; telephone?: string; phoneUrl?: string; websiteUrl?: string; modifiedDate?: string }
 export interface PlacePhoto { id: string; sourceUrl?: string; url?: string; thumbnailUrl?: string; name?: string; license?: string }

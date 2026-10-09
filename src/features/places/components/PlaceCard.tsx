@@ -25,5 +25,6 @@ export function PlaceCard({ place, regionLabel, onPress }: { place: Place; regio
     <Text tone="muted">{regionLabel}</Text>
     <Text variant="label">{t(`explore.type.${place.type}`)}</Text>
     <Text variant="caption" tone="muted">{t('explore.source')}</Text>
+    {place.imageLicense && <Text variant="caption" tone="muted">{t('place.photoLicense', { value: place.imageLicense })}</Text>}
   </Pressable><SavePlaceButton place={place} /></View>;
 }

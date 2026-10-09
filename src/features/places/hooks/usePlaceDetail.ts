@@ -24,5 +24,5 @@ export function usePlaceDetail(identifier: string) {
     return controller.subscribe(record);
   }, [controller, library, trips, identifier]));
   const snapshot = [...saved, ...recent, ...items].find(item => item.place.id === identifier);
-  return { ...state, snapshot, historyError, gallery: galleryPhotos(state.photos.data ?? [], state.basic.data), retry: controller.retry };
+  return { ...state, snapshot, historyError, gallery: galleryPhotos(state.photos.data ?? [], state.basic.data ?? (snapshot ? { place: snapshot.place } : undefined)), retry: controller.retry };
 }

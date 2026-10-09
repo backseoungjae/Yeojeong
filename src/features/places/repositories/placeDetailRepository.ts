@@ -3,15 +3,17 @@ import { toPlaceDetail, toPlaceInfo, toPlacePhoto } from '../../../shared/api/to
 import { TourError } from '../../../shared/api/tour/tourError.ts';
 import { RequestCache } from '../../../shared/cache/requestCache.ts';
 import type { PlaceDetail, PlaceIdentifier, PlaceInfo, PlacePhoto } from '../../../shared/models/placeDetail.ts';
-export function createPlaceDetailRepository(client: TourClient) {
+export function createPlaceDetailRepository(client: TourClient, now = Date.now) {
   const basic = new RequestCache<PlaceDetail>(), info = new RequestCache<PlaceInfo[]>(), photos = new RequestCache<PlacePhoto[]>();
   const key = (id: PlaceIdentifier, endpoint: string) => JSON.stringify([id.service, id.language, id.contentId, endpoint]);
   return {
+    dispose() { basic.clear(); info.clear(); photos.clear(); },
     basic(id: PlaceIdentifier, signal?: AbortSignal) {
       return basic.get(key(id, 'detailCommon2'), async abort => {
         const page = await client.request(id.language, 'detailCommon2', { contentId: id.contentId, numOfRows: '1' }, abort);
+        if (!page.items.length) throw new TourError('missing');
         if (page.items.length !== 1) throw new TourError('format');
-        return toPlaceDetail(page.items[0], id);
+        return { ...toPlaceDetail(page.items[0], id), checkedAt: now() };
       }, signal);
     },
     info(id: PlaceIdentifier, detail: PlaceDetail, signal?: AbortSignal) {

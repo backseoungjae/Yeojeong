@@ -6,7 +6,7 @@ import { LibraryStore } from '../models/libraryStore';
 const LibraryContext = createContext<LibraryStore | null>(null);
 export function LibraryProvider({ children }: { children: ReactNode }) {
   const database = useAppDatabase();
-  const [store] = useState(() => new LibraryStore(createLibraryRepository(database), createSettingsRepository(database)));
+  const [store] = useState(() => new LibraryStore(createLibraryRepository(database.forSession()), createSettingsRepository(database.forSession())));
   useEffect(() => { void store.initialize(); }, [store]);
   return <LibraryContext.Provider value={store}>{children}</LibraryContext.Provider>;
 }

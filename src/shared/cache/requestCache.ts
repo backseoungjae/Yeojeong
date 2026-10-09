@@ -8,6 +8,7 @@ export class RequestCache<T> {
   private limit: number;
   private now: () => number;
   constructor(ttl = 5 * 60 * 1000, limit = 50, now = Date.now) { this.ttl = ttl; this.limit = limit; this.now = now; }
+  clear() { this.values.clear(); this.pending.forEach(entry => entry.controller.abort()); this.pending.clear(); }
   read(key: string): T | undefined {
     const entry = this.values.get(key);
     if (!entry) return undefined;
