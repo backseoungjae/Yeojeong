@@ -1,5 +1,6 @@
+import { useLibrary } from '@/features/library/hooks/LibraryProvider';
 import { useLocales } from 'expo-localization';
-import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { initialLanguage } from '../i18n/format';
 import type { ContentLanguage } from '../models/place';
@@ -10,6 +11,8 @@ interface AppSettings {
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
   resolvedTheme: ResolvedTheme;
+  settingsBusy: boolean;
+  settingsError: boolean;
   colors: typeof colors.light | typeof colors.dark;
 }
 const subscribeHydration = () => () => {};
@@ -20,11 +23,14 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const locales = useLocales();
   const hydrated = useSyncExternalStore(subscribeHydration, clientReady, serverReady);
   const systemTheme = useColorScheme();
-  const [chosenLanguage, setLanguage] = useState<ContentLanguage | null>(null);
-  const [themeMode, setThemeMode] = useState<ThemeMode>('system');
+  const { preferences, store, settingsBusy, settingsError } = useLibrary();
+  const chosenLanguage = preferences.language;
+  const themeMode: ThemeMode = preferences.theme ?? 'system';
+  const setLanguage = (language: ContentLanguage) => { void store.setLanguage(language); };
+  const setThemeMode = (mode: ThemeMode) => { if (mode !== 'system') void store.setTheme(mode); };
   const language = chosenLanguage ?? initialLanguage(hydrated ? locales[0]?.languageTag : 'en');
   const resolvedTheme = resolveTheme(themeMode, systemTheme);
-  return <SettingsContext.Provider value={{ language, setLanguage, themeMode, setThemeMode, resolvedTheme, colors: colors[resolvedTheme] }}>{children}</SettingsContext.Provider>;
+  return <SettingsContext.Provider value={{ language, setLanguage, themeMode, setThemeMode, resolvedTheme, settingsBusy, settingsError, colors: colors[resolvedTheme] }}>{children}</SettingsContext.Provider>;
 }
 export function useAppSettings() {
   const settings = useContext(SettingsContext);

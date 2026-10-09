@@ -1,3 +1,5 @@
+import { useLibrary } from '@/features/library/hooks/LibraryProvider';
+import { RecentSearches } from '@/features/library/components/RecentSearches';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
@@ -16,13 +18,14 @@ import { ErrorState } from '@/shared/ui/ErrorState';
 import { usePlaces } from '../hooks/usePlaces';
 import { useRegions } from '../hooks/useRegions';
 import { useExploreError } from '../hooks/useExploreError';
-import { PlaceCard } from '../components/PlaceCard';
+import { PlaceCard } from '../../places/components/PlaceCard';
 import { ExploreFilters } from '../components/ExploreFilters';
 import { changeRegion, queryKey, type ExploreConditions } from '../models/exploreQuery';
 export default function ExploreScreen() {
   const { t, language } = useI18n();
   const { colors, spacing, layout } = useTheme();
   const state = usePlaces();
+  const { store: library } = useLibrary();
   const { store, conditions } = state;
   const provinces = useRegions();
   const districts = useRegions(conditions.regionCode, Boolean(conditions.regionCode));
@@ -45,7 +48,8 @@ export default function ExploreScreen() {
     return () => cancelAnimationFrame(frame);
   }, [key, store]);
   const dismissFilters = () => setDraft(null);
-  const submit = () => { dismissFilters(); store.submit(); };
+  const submit = () => { dismissFilters(); store.submit(); if (state.keywordInput.trim()) void library.recordSearch(state.keywordInput); };
+  const recentSearch = (keyword: string) => { dismissFilters(); store.setKeywordInput(keyword); store.submit(); void library.recordSearch(keyword); };
   const reset = () => { dismissFilters(); store.reset(); };
   const matchesLanguage = state.language === language;
   const loading = state.loading || !state.page && !state.error || !matchesLanguage;
@@ -60,6 +64,7 @@ export default function ExploreScreen() {
         <Text variant="title" accessibilityRole="header">{t('explore.title')}</Text>
         <TextField fieldId="explore-keyword" label={t('explore.keyword')} placeholder={t('explore.keywordPlaceholder')} value={state.keywordInput} onChangeText={store.setKeywordInput} returnKeyType="search" onSubmitEditing={submit} />
         <Button label={t('explore.search')} onPress={submit} />
+        <RecentSearches onSelect={recentSearch} />
         <Button label={t('explore.editFilters')} variant="secondary" onPress={() => setDraft({ ...conditions })} />
         {draft && <ExploreFilters value={draft} onChange={setDraft} onCancel={dismissFilters} onApply={() => { store.apply(draft); dismissFilters(); }} />}
         <Text variant="label">{t('explore.applied')}</Text>
@@ -71,7 +76,6 @@ export default function ExploreScreen() {
         </View>
         {Boolean(conditions.keyword) && <Text tone="muted">{t('explore.searchTypeNotice')}</Text>}
         <Button label={t('explore.resetAll')} variant="secondary" onPress={reset} />
-        <Text variant="caption" tone="muted">{t('explore.saveNotice')}</Text>
         {state.page > 0 && matchesLanguage && <Text accessibilityLiveRegion="polite">{t('explore.resultCount', { shown: state.places.length, total: state.totalCount })}</Text>}
       </View>}
       renderItem={({ item }) => <PlaceCard place={item} regionLabel={item.address ?? provinces.values.find(region => region.code === item.regionCode)?.name ?? t('explore.regionUnknown')}

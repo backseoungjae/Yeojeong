@@ -1,3 +1,4 @@
+import { SavePlaceButton } from '@/features/library/components/SavePlaceButton';
 import { useState } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, View } from 'react-native';
@@ -12,7 +13,7 @@ export function PlaceCard({ place, regionLabel, onPress }: { place: Place; regio
   const [failed, setFailed] = useState(false);
   const [focused, setFocused] = useState(false);
   const imageUrl = place.listImageUrl ?? place.imageUrl;
-  return <Pressable accessibilityRole="button" accessibilityLabel={t('explore.openPlace', { name: place.name, region: regionLabel, type: t(`explore.type.${place.type}`) })}
+  return <View style={{ gap: spacing.sm }}><Pressable accessibilityRole="button" accessibilityLabel={t('explore.openPlace', { name: place.name, region: regionLabel, type: t(`explore.type.${place.type}`) })}
     accessibilityHint={t('explore.placeHint', { image: t(failed ? 'explore.imageFailed' : imageUrl ? 'explore.photoAvailable' : 'explore.noListImage') })}
     onPress={onPress} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     style={({ pressed }) => ({ ...focusRing(focused, colors.focus, layout.focusWidth), borderRadius: radius.card, borderWidth: layout.focusWidth, borderColor: focused ? colors.focus : colors.border,
@@ -24,5 +25,5 @@ export function PlaceCard({ place, regionLabel, onPress }: { place: Place; regio
     <Text tone="muted">{regionLabel}</Text>
     <Text variant="label">{t(`explore.type.${place.type}`)}</Text>
     <Text variant="caption" tone="muted">{t('explore.source')}</Text>
-  </Pressable>;
+  </Pressable><SavePlaceButton place={place} /></View>;
 }

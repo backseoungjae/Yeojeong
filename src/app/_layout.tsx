@@ -1,4 +1,6 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { LibraryProvider } from '@/features/library/hooks/LibraryProvider';
+import { LibraryGate } from '@/features/library/components/LibraryGate';
 import { PlaceDetailProvider } from '@/features/places/hooks/PlaceDetailProvider';
 import { ExploreProvider } from '@/features/explore/hooks/ExploreProvider';
 import { StatusBar } from 'expo-status-bar';
@@ -28,5 +30,5 @@ function Navigation() {
   </ThemeProvider>;
 }
 export default function RootLayout() {
-  return <AppSettingsProvider><AccessibilityProvider><ExploreProvider><PlaceDetailProvider><Navigation /></PlaceDetailProvider></ExploreProvider></AccessibilityProvider></AppSettingsProvider>;
+  return <LibraryProvider><AppSettingsProvider><AccessibilityProvider><LibraryGate><ExploreProvider><PlaceDetailProvider><Navigation /></PlaceDetailProvider></ExploreProvider></LibraryGate></AccessibilityProvider></AppSettingsProvider></LibraryProvider>;
 }

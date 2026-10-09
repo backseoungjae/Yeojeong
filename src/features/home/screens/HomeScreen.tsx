@@ -1,3 +1,4 @@
+import { RecentPlaces } from '@/features/library/components/RecentPlaces';
 import { router } from 'expo-router';
 import { View } from 'react-native';
 import { useI18n } from '@/shared/i18n/useI18n';
@@ -16,5 +17,6 @@ export default function HomeScreen() {
       <Button label={t('home.explore')} onPress={() => router.navigate('/explore')} />
       <Button label={t('home.trips')} variant="secondary" onPress={() => router.navigate('/trips')} />
     </View>
+    <RecentPlaces />
   </Screen>;
 }
