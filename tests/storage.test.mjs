@@ -128,3 +128,11 @@ test('저장 데이터의 서비스·언어·ID 무결성 검증과 불필요한
   assert.throws(() => parseSnapshot({ ...place(1), contentId: '2' }), { kind: 'data' });
   assert.equal('extraField' in parseSnapshot({ ...place(1), extraField: 'not stored' }), false);
 });
+test('반복 스냅샷 검증 캐시는 외부 객체 변경·실제 JSON 변경·메타데이터 손상을 숨기지 않음',async()=>{
+ const f=fixture();await f.repository.save(place(1));let data=await f.repository.load();data.saved[0].place.name='Fixture external mutation';
+ assert.equal((await f.repository.load()).saved[0].place.name,'Place 1');
+ const changed={...place(1),name:'Fixture DB update'};f.native.prepare('UPDATE place_snapshots SET snapshot_json=? WHERE id=?').run(JSON.stringify(changed),place(1).id);
+ assert.equal((await f.repository.load()).saved[0].place.name,'Fixture DB update');
+ f.native.prepare('UPDATE place_snapshots SET service=? WHERE id=?').run('EngService2',place(1).id);await assert.rejects(f.repository.load(),{kind:'data'});
+ f.native.prepare('UPDATE place_snapshots SET service=?,snapshot_json=? WHERE id=?').run('KorService2','{"invalid":true}',place(1).id);await assert.rejects(f.repository.load(),{kind:'data'});f.native.close();
+});

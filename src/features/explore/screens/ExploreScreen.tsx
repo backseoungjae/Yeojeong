@@ -33,6 +33,7 @@ export default function ExploreScreen() {
   const nextError = useExploreError(state.nextError);
   const [draft, setDraft] = useState<ExploreConditions | null>(null);
   const list = useRef<FlatList<Place>>(null);
+  const filterButton = useRef<View>(null);
   const scrolling = useRef(false);
   const key = queryKey(state.language, conditions);
   const regionName = provinces.values.find(region => region.code === conditions.regionCode)?.name ?? t('explore.regionUnknown');
@@ -65,8 +66,8 @@ export default function ExploreScreen() {
         <TextField fieldId="explore-keyword" label={t('explore.keyword')} placeholder={t('explore.keywordPlaceholder')} value={state.keywordInput} onChangeText={store.setKeywordInput} returnKeyType="search" onSubmitEditing={submit} />
         <Button label={t('explore.search')} onPress={submit} />
         <RecentSearches onSelect={recentSearch} />
-        <Button label={t('explore.editFilters')} variant="secondary" onPress={() => setDraft({ ...conditions })} />
-        {draft && <ExploreFilters value={draft} onChange={setDraft} onCancel={dismissFilters} onApply={() => { store.apply(draft); dismissFilters(); }} />}
+        <Button ref={filterButton} label={t('explore.editFilters')} variant="secondary" onPress={() => setDraft({ ...conditions })} />
+        {draft && <ExploreFilters returnTarget={filterButton} value={draft} onChange={setDraft} onCancel={dismissFilters} onApply={() => { store.apply(draft); dismissFilters(); }} />}
         <Text variant="label">{t('explore.applied')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
           {Boolean(conditions.keyword) && <Chip label={t('explore.removeKeyword', { value: conditions.keyword })} onPress={() => { store.setKeywordInput(''); store.apply({ ...conditions, keyword: '' }); dismissFilters(); }} />}

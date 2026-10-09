@@ -1,3 +1,5 @@
+import { useFocusRegion } from '@/shared/accessibility/useFocusRegion';
+import type { RefObject } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '@/shared/i18n/useI18n';
 import { useTheme } from '@/shared/theme/useTheme';
@@ -7,11 +9,12 @@ import { Text } from '@/shared/ui/Text';
 import { Section } from '@/shared/ui/Section';
 import { RegionSelector } from './RegionSelector';
 import { defaultConditions, type ExploreConditions } from '../models/exploreQuery';
-export function ExploreFilters({ value, onChange, onApply, onCancel }: { value: ExploreConditions; onChange: (value: ExploreConditions) => void; onApply: () => void; onCancel: () => void }) {
+export function ExploreFilters({ value, onChange, onApply, onCancel, returnTarget }: { value: ExploreConditions; onChange: (value: ExploreConditions) => void; onApply: () => void; onCancel: () => void; returnTarget?: RefObject<View | null> }) {
+  const focus = useFocusRegion(true, returnTarget);
   const { t } = useI18n();
   const { spacing, colors, radius } = useTheme();
   return <View style={{ gap: spacing.lg, padding: spacing.md, backgroundColor: colors.surfaceMuted, borderRadius: radius.card }}>
-    <Text variant="heading" accessibilityRole="header">{t('explore.editFilters')}</Text>
+    <View ref={focus} accessible accessibilityRole="header" accessibilityLabel={t('explore.editFilters')}><Text variant="heading">{t('explore.editFilters')}</Text></View>
     <RegionSelector value={value} onChange={onChange} />
     <Section title={t('explore.type')}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>

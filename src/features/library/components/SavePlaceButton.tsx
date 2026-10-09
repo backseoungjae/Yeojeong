@@ -11,7 +11,7 @@ export function SavePlaceButton({ place }: { place: Place }) {
   const { saved, busy, error, toggle } = useSavedPlace(place);
   return <View style={{ gap: spacing.sm }}>
     <Button label={t(saved ? 'local.unsave' : 'place.save')} accessibilityLabel={t(saved ? 'local.unsaveName' : 'local.saveName', { name: place.name })}
-      variant={saved ? 'secondary' : 'primary'} busy={busy} onPress={toggle} />
+      variant={saved ? 'secondary' : 'primary'} selected={saved} busy={busy} accessibilityLiveRegion="polite" onPress={toggle} />
     {error && <Text tone="danger" accessibilityRole="alert" accessibilityLiveRegion="assertive">{t('local.saveError')}</Text>}
   </View>;
 }

@@ -45,7 +45,12 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/*.test.mjs",
-    "probe:tour": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/probe-tour.mjs"
+    "probe:tour": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/probe-tour.mjs",
+    "test:e2e": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verifyApp.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verifyApp.mjs --restore && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verifyApp.mjs --reset-restored",
+    "test:quality": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verifyApp.mjs --quality",
+    "measure:storage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/measureStorage.mjs",
+    "measure:web": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verifyApp.mjs --performance",
+    "probe:performance": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/probeTourPerformance.mjs"
   },
   "private": true
 }

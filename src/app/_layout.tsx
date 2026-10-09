@@ -14,6 +14,7 @@ import { AccessibilityProvider, useAccessibility } from '@/shared/accessibility/
 import { useTheme } from '@/shared/theme/useTheme';
 import { useI18n } from '@/shared/i18n/useI18n';
 import { AppHeader } from '@/shared/navigation/AppHeader';
+export { RootErrorBoundary as ErrorBoundary } from '@/shared/ui/RootErrorBoundary';
 function Navigation() {
   const { completed, error } = useLocalData();
   useEffect(() => { if (completed || error) router.replace('/'); }, [completed, error]);
@@ -32,6 +33,7 @@ function Navigation() {
       <Stack.Screen name="trips/edit/[tripId]" options={{ title: t('trip.editTitle') }} />
       <Stack.Protected guard={__DEV__}>
         <Stack.Screen name="dev/gallery" options={{ title: t('gallery.title') }} />
+        <Stack.Screen name="dev/error" options={{ title: t('dev.recovery') }} />
         <Stack.Screen name="dev/api" options={{ title: t('dev.api') }} />
       </Stack.Protected>
     </Stack>

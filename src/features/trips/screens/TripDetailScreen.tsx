@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { ConfirmationPanel } from '@/shared/ui/ConfirmationPanel';
+import { useRef, useState } from 'react';
+import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useI18n } from '@/shared/i18n/useI18n';
 import { formatDate } from '@/shared/i18n/format';
@@ -23,6 +25,7 @@ export default function TripDetailScreen() {
   const today = useTripToday();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
+  const deleteButton = useRef<View>(null);
   const trip = state.trip;
   if (!trip) return <Screen><EmptyState title={t(deleted ? 'trip.deleted' : 'trip.notFound')} description={t(deleted ? 'trip.deleteCompleteHint' : 'trip.error.missing')}
     action={{ label: t('trip.backToTrips'), onPress: () => router.replace('/trips') }} /></Screen>;
@@ -47,12 +50,11 @@ export default function TripDetailScreen() {
     <TripFeedback error={state.error} />
     {state.notice && <Text accessibilityRole="alert" accessibilityLiveRegion="polite">{t(`trip.${state.notice}`)}</Text>}
     <Button label={t('home.explore')} variant="secondary" disabled={state.busy} onPress={() => guard.request(() => router.navigate('/explore'))} />
-    <Button label={t('trip.deleteTrip')} variant="secondary" disabled={state.busy} onPress={() => guard.request(() => setConfirmDelete(true))} />
-    {confirmDelete && <Section title={t('trip.deleteTitle')}>
-      <Text accessibilityRole="alert">{t('trip.deleteDescription', { name: trip.name, count: state.tripItems.length })}</Text>
+    <Button ref={deleteButton} label={t('trip.deleteTrip')} variant="secondary" disabled={state.busy} onPress={() => guard.request(() => setConfirmDelete(true))} />
+    {confirmDelete && <ConfirmationPanel returnTarget={deleteButton} title={t('trip.deleteTitle')} description={t('trip.deleteDescription', { name: trip.name, count: state.tripItems.length })}>
       <Button label={t('trip.confirmDelete')} busy={state.busy} onPress={() => void state.store.deleteTrip(trip.id).then(success => { if (success) setDeleted(true); })} />
       <Button label={t('trip.cancel')} variant="secondary" disabled={state.busy} onPress={() => setConfirmDelete(false)} />
-    </Section>}
+    </ConfirmationPanel>}
     {guard.confirming && <DiscardConfirmation confirm={guard.confirm} cancel={guard.cancel} />}
   </Screen>;
 }

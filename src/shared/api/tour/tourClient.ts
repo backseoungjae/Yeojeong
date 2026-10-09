@@ -1,3 +1,4 @@
+import { logEvent } from '../../observability/structuredLog.ts';
 import type { ContentLanguage } from '../../models/place.ts';
 import { resolveTourKey, services, type TourEnvironment } from './tourConfig.ts';
 import { parseTourResponse } from './tourDto.ts';
@@ -39,8 +40,9 @@ export function createTourClient(env: TourEnvironment, send: TourTransport = tra
         if (controller.signal.aborted) throw new TourError(timedOut ? 'timeout' : 'cancelled');
         return parseTourResponse(response.body, response.status);
       } catch (error) {
-        if (controller.signal.aborted) throw new TourError(timedOut ? 'timeout' : 'cancelled');
-        if (error instanceof TourError) throw error;
+        if (controller.signal.aborted) { if (timedOut) logEvent('api_failure','tour','timeout'); throw new TourError(timedOut ? 'timeout' : 'cancelled'); }
+        if (error instanceof TourError) { if (error.kind !== 'cancelled') logEvent('api_failure','tour',error.kind); throw error; }
+        logEvent('api_failure','tour','network');
         throw new TourError('network');
       } finally { clearTimeout(timer); signal?.removeEventListener('abort', cancel); }
     },

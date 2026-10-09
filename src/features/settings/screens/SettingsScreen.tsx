@@ -1,4 +1,5 @@
-import { Platform } from 'react-native';
+import { useRef } from 'react';
+import { Platform, View } from 'react-native';
 import { ConfirmationPanel } from '@/shared/ui/ConfirmationPanel';
 import { useSettings } from '../hooks/useSettings';
 import { useLibrary } from '@/features/library/hooks/LibraryProvider';
@@ -14,6 +15,7 @@ export default function SettingsScreen() {
   const { t, formatNumber } = useI18n();
   const { store, historyBusy, historyError } = useLibrary();
   const settings = useSettings();
+  const deleteButton = useRef<View>(null);
   const { fontScale, reduceMotion, screenReader } = useAccessibility();
   return <Screen revealEnd={settings.confirming}>
     <AppearanceControls />
@@ -39,15 +41,16 @@ export default function SettingsScreen() {
     <Section title={t('settings.localData')}>
       <Text>{t('settings.deleteScope')}</Text>
       <Text>{t(Platform.OS === 'web' ? 'settings.webCacheScope' : 'settings.nativeCacheScope')}</Text>
-      <Button label={t('settings.deleteAll')} variant="secondary" onPress={() => settings.setConfirming(true)} />
+      <Button ref={deleteButton} label={t('settings.deleteAll')} variant="secondary" onPress={() => settings.setConfirming(true)} />
       {settings.error && <Text tone="danger" accessibilityRole="alert">{t('settings.deleteFailed')}</Text>}
       {settings.completed && <Text accessibilityRole="alert" accessibilityLiveRegion="polite">{t('settings.deleted')}</Text>}
     </Section>
     {__DEV__ && <Section title={t('dev.title')}>
       <Button label={t('dev.gallery')} variant="secondary" onPress={() => router.push('/dev/gallery')} />
+      <Button label={t('dev.recovery')} variant="secondary" onPress={() => router.push('/dev/error')} />
       <Button label={t('dev.api')} variant="secondary" onPress={() => router.push('/dev/api')} />
     </Section>}
-    {settings.confirming && <ConfirmationPanel title={t('settings.deleteTitle')} description={t('settings.deleteConfirm', settings.counts)}>
+    {settings.confirming && <ConfirmationPanel returnTarget={deleteButton} title={t('settings.deleteTitle')} description={t('settings.deleteConfirm', settings.counts)}>
       <Text>{t('settings.deleteScope')}</Text>
       <Text>{t(Platform.OS === 'web' ? 'settings.webCacheScope' : 'settings.nativeCacheScope')}</Text>
       <Button label={t('trip.cancel')} onPress={() => settings.setConfirming(false)} />

@@ -1,3 +1,6 @@
+import { useRef } from 'react';
+import { View } from 'react-native';
+import { useFocusRegion } from '@/shared/accessibility/useFocusRegion';
 import { router } from 'expo-router';
 import type { Place } from '@/shared/models/place';
 import { useI18n } from '@/shared/i18n/useI18n';
@@ -12,8 +15,10 @@ import { TripFeedback } from './TripFeedback';
 export function AddPlaceToTrip({ place, initialTripId }: { place: Place; initialTripId?: string }) {
   const { t, language } = useI18n();
   const flow = useItineraryAddition(place, initialTripId);
-  if (!flow.open) return <Button label={t('place.addToTrip')} accessibilityLabel={t('trip.addPlaceName', { name: place.name })} variant="secondary" onPress={flow.begin} />;
-  return <Section title={t('trip.chooseTrip')}>
+  const trigger = useRef<View>(null);
+  const focus = useFocusRegion(flow.open, trigger);
+  if (!flow.open) return <Button ref={trigger} label={t('place.addToTrip')} accessibilityLabel={t('trip.addPlaceName', { name: place.name })} variant="secondary" onPress={flow.begin} />;
+  return <Section headingRef={focus} title={t('trip.chooseTrip')}>
     {!flow.trips.length && <Text>{t('trip.noTripsForAddition')}</Text>}
     {flow.trips.map(trip => <Chip key={trip.id} label={t('trip.tripChoice', { name: trip.name, start: formatDate(trip.startDate, language), end: formatDate(trip.endDate, language) })}
       selected={trip.id === flow.trip?.id} disabled={flow.busy} onPress={() => flow.select(trip.id)} />)}

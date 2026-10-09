@@ -1,3 +1,4 @@
+import { logEvent } from '../observability/structuredLog.ts';
 export type SqlValue = string | number | null;
 export interface SqlConnection {
   execAsync(sql: string): Promise<void>;
@@ -84,7 +85,7 @@ export class AppDatabase {
       this.ready = this.open().then(async db => {
         try { await migrateDatabase(db); this.connection = db; return db; }
         catch (error) { await db.closeAsync().catch(() => {}); throw error; }
-      }).catch(error => { this.ready = undefined; throw error instanceof StorageError ? error : new StorageError('initialization'); });
+      }).catch(error => { this.ready = undefined; logEvent('storage_failure','database',error instanceof StorageError ? error.kind : 'initialization'); throw error instanceof StorageError ? error : new StorageError('initialization'); });
     }
     return this.ready;
   }
@@ -123,6 +124,7 @@ export class AppDatabase {
       catch (error) {
         try { await db.execAsync('ROLLBACK'); }
         catch { this.ready = undefined; await db.closeAsync().catch(() => {}); }
+        if (!(error instanceof RepositoryError)) logEvent('storage_failure','database','write');
         throw error instanceof RepositoryError ? error : new StorageError('write');
       }
   }

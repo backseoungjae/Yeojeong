@@ -1,4 +1,9 @@
 const ko = {
+  "recovery.title": "화면을 표시하지 못했습니다",
+  "recovery.description": "다시 시도하면 화면을 복구합니다. 저장한 여행과 메모는 삭제하지 않습니다. 문제가 계속되면 앱을 닫고 다시 실행해 주세요.",
+  "dev.recovery": "오류 복구 검증",
+  "dev.recoveryDescription": "검증 버튼으로 렌더링 오류를 발생시켜 복구 화면을 확인합니다. 사용자 데이터를 삭제하지 않습니다.",
+  "dev.triggerError": "검증용 화면 오류 발생",
   "home.continue": "내 여행 이어보기",
   "home.noNextTrip": "진행 중이거나 예정된 여행이 없습니다. 새로운 여행을 만들어 보세요.",
   "home.offlineHint": "저장한 일정·메모·기본 장소 정보는 인터넷 없이 열람하고 편집할 수 있습니다. 사진과 최신 관광정보는 연결 상태에 따라 제공됩니다.",
@@ -263,6 +268,11 @@ const ko = {
 } as const;
 export type MessageKey = keyof typeof ko;
 const en: Record<MessageKey, string> = {
+  "recovery.title": "Unable to display this screen",
+  "recovery.description": "Try again to recover the screen. Saved trips and notes are kept. If the problem persists, close and reopen the app.",
+  "dev.recovery": "Error recovery diagnostics",
+  "dev.recoveryDescription": "Trigger a render error to check the recovery screen. User data is kept.",
+  "dev.triggerError": "Trigger a diagnostic screen error",
   "home.continue": "Continue your trip",
   "home.noNextTrip": "No trip is in progress or coming up. Create a new trip to get started.",
   "home.offlineHint": "View and edit saved itineraries, notes and basic place information without internet. Photos and current tourism information depend on your connection.",
