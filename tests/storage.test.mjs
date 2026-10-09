@@ -13,7 +13,7 @@ const place = (id, language = 'ko') => ({ id: `tourapi:${language === 'ko' ? 'Ko
 function connection(native, intercept = () => {}) {
   return {
     async execAsync(sql) { intercept(sql); native.exec(sql); },
-    async runAsync(sql, ...values) { intercept(sql); return native.prepare(sql).run(...values); },
+    async runAsync(sql, ...values) { intercept(sql); const result = native.prepare(sql).run(...values); return { changes: result.changes, lastInsertRowId: result.lastInsertRowid }; },
     async getFirstAsync(sql, ...values) { intercept(sql); return native.prepare(sql).get(...values) ?? null; },
     async getAllAsync(sql, ...values) { intercept(sql); return native.prepare(sql).all(...values); },
     async closeAsync() { native.close(); },
@@ -30,8 +30,8 @@ test('초기화 동시 호출과 조회 경쟁: 한 번만 열고 마이그레�
   const database = new AppDatabase(async () => { opens++; await tick(); return connection(native); });
   const repository = createLibraryRepository(database);
   const results = await Promise.all([database.initialize(), repository.load(), repository.load()]);
-  assert.equal(opens, 1); assert.equal(results[1].saved.length, 0); assert.equal(native.prepare('PRAGMA user_version').get().user_version, 2);
-  assert.equal(native.prepare("SELECT count(*) AS n FROM sqlite_master WHERE name IN ('trips','itinerary_items')").get().n, 0); native.close();
+  assert.equal(opens, 1); assert.equal(results[1].saved.length, 0); assert.equal(native.prepare('PRAGMA user_version').get().user_version, migrations.length);
+  assert.equal(native.prepare("SELECT count(*) AS n FROM sqlite_master WHERE name IN ('trips','itinerary_items')").get().n, 2); native.close();
 });
 test('연속·동시 저장은 SQL 제약으로 중복되지 않고 저장 당시 스냅샷 유지', async () => {
   const f = fixture();
@@ -103,12 +103,12 @@ test('DB 연결 종료·재연결로 장소·최근 기록·선택 설정 복원
     await store.initialize(); assert.equal(store.getSnapshot().status, 'ready'); assert.equal(store.getSnapshot().saved[0].place.language, 'ko'); assert.equal(store.getSnapshot().recent[0].place.language, 'en'); assert.equal(store.getSnapshot().searches[0].keyword, 'Original keyword'); assert.deepEqual(store.getSnapshot().preferences, { language: 'en', theme: 'light' }); second.close();
   } finally { await rm(folder, { recursive: true, force: true }); }
 });
-test('기존 v1 DB 마이그레이션은 저장·스냅샷·설정 보존, v2 재실행은 동일', async () => {
+test('기존 v1 DB 마이그레이션은 저장·스냅샷·설정 보존, 최신 버전 재실행은 동일', async () => {
   const f = fixture(); f.native.exec(migrations[0]); f.native.exec('PRAGMA user_version=1');
   const value = place(1); f.native.prepare('INSERT INTO place_snapshots VALUES (?,?,?,?,?,?)').run(value.id,value.service,value.contentId,value.language,JSON.stringify(value),1);
   f.native.prepare('INSERT INTO saved_places VALUES (?,?)').run(value.id,1); f.native.prepare('INSERT INTO recent_places VALUES (?,?)').run(value.id,1); f.native.exec("INSERT INTO recent_searches VALUES ('Original',1); INSERT INTO preferences VALUES ('language','en');");
   const data = await f.repository.load(); assert.equal(data.saved[0].place.name, value.name); assert.equal(data.recent[0].place.id, value.id); assert.equal(data.searches[0].keyword, 'Original'); assert.equal((await f.settings.load()).language, 'en');
-  assert.equal(f.native.prepare('PRAGMA user_version').get().user_version, 2); await f.db.initialize(); assert.equal((await f.repository.load()).saved.length, 1); f.native.close();
+  assert.equal(f.native.prepare('PRAGMA user_version').get().user_version, migrations.length); await f.db.initialize(); assert.equal((await f.repository.load()).saved.length, 1); f.native.close();
 });
 test('마이그레이션 실패는 현재 버전·기존 데이터를 유지하고 다음 시도에 재개', async () => {
   let fail = true; const native = new DatabaseSync(':memory:'); native.exec(migrations[0]); native.exec('PRAGMA user_version=1'); native.exec("INSERT INTO recent_searches VALUES ('Keep',1);");
@@ -116,7 +116,7 @@ test('마이그레이션 실패는 현재 버전·기존 데이터를 유지하�
   // 종료 후에도 테스트 엔진을 검사하기 위해 close만 무효화한다.
   const database = new AppDatabase(async () => ({ ...sql, closeAsync: async () => {} }));
   await assert.rejects(database.initialize(), { kind: 'initialization' }); assert.equal(native.prepare('PRAGMA user_version').get().user_version, 1); assert.equal(native.prepare('SELECT keyword FROM recent_searches').get().keyword, 'Keep');
-  fail = false; await database.initialize(); assert.equal(native.prepare('PRAGMA user_version').get().user_version, 2); assert.equal(native.prepare('SELECT keyword FROM recent_searches').get().keyword, 'Keep'); native.close();
+  fail = false; await database.initialize(); assert.equal(native.prepare('PRAGMA user_version').get().user_version, migrations.length); assert.equal(native.prepare('SELECT keyword FROM recent_searches').get().keyword, 'Keep'); native.close();
 });
 test('미래 DB 버전은 덮어쓰지 않고 거부하며 초기화 실패는 복구 가능한 상태', async () => {
   const native = new DatabaseSync(':memory:'); native.exec('PRAGMA user_version=99; CREATE TABLE keep(value TEXT); INSERT INTO keep VALUES (\'safe\');');

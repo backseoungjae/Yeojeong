@@ -3,10 +3,12 @@ import type { ResolvedTheme } from '../../../shared/theme/tokens.ts';
 import type { LibraryRepository } from '../repositories/libraryRepository.ts';
 import type { SettingsRepository, Preferences } from '../../settings/repositories/settingsRepository.ts';
 import { emptyLibrary, type LibraryData } from './library.ts';
+import { StorageError } from '../../../shared/database/database.ts';
 export interface LibraryState extends LibraryData {
   status: 'loading' | 'ready' | 'error'; preferences: Preferences;
   pendingIds: ReadonlySet<string>; settingsBusy: boolean; historyBusy: boolean;
   saveErrors: ReadonlySet<string>; historyError: boolean; settingsError: boolean;
+  initializationError?: StorageError['kind'];
 }
 export class LibraryStore {
   private repository: LibraryRepository;
@@ -23,7 +25,7 @@ export class LibraryStore {
     if (this.state.status === 'ready') return Promise.resolve();
     if (this.initializing) return this.initializing;
     this.update({ status: 'loading' });
-    this.initializing = Promise.all([this.repository.load(), this.settings.load()]).then(([data, preferences]) => this.update({ ...data, preferences, status: 'ready' }), () => this.update({ status: 'error' })).finally(() => { this.initializing = undefined; });
+    this.initializing = Promise.all([this.repository.load(), this.settings.load()]).then(([data, preferences]) => this.update({ ...data, preferences, status: 'ready', initializationError: undefined }), error => this.update({ status: 'error', initializationError: error instanceof StorageError ? error.kind : 'initialization' })).finally(() => { this.initializing = undefined; });
     return this.initializing;
   };
   isSaved = (id: string) => this.state.saved.some(value => value.place.id === id);

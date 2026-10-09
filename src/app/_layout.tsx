@@ -1,6 +1,9 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { LibraryProvider } from '@/features/library/hooks/LibraryProvider';
 import { LibraryGate } from '@/features/library/components/LibraryGate';
+import { DatabaseProvider } from '@/shared/database/DatabaseProvider';
+import { TripsProvider } from '@/features/trips/hooks/TripsProvider';
+import { TripsGate } from '@/features/trips/components/TripsGate';
 import { PlaceDetailProvider } from '@/features/places/hooks/PlaceDetailProvider';
 import { ExploreProvider } from '@/features/explore/hooks/ExploreProvider';
 import { StatusBar } from 'expo-status-bar';
@@ -22,6 +25,7 @@ function Navigation() {
       <Stack.Screen name="places/[placeId]" options={{ title: t('place.title') }} />
       <Stack.Screen name="trips/new" options={{ title: t('trip.createTitle') }} />
       <Stack.Screen name="trips/[tripId]" options={{ title: t('trip.detailTitle') }} />
+      <Stack.Screen name="trips/edit/[tripId]" options={{ title: t('trip.editTitle') }} />
       <Stack.Protected guard={__DEV__}>
         <Stack.Screen name="dev/gallery" options={{ title: t('gallery.title') }} />
         <Stack.Screen name="dev/api" options={{ title: t('dev.api') }} />
@@ -30,5 +34,5 @@ function Navigation() {
   </ThemeProvider>;
 }
 export default function RootLayout() {
-  return <LibraryProvider><AppSettingsProvider><AccessibilityProvider><LibraryGate><ExploreProvider><PlaceDetailProvider><Navigation /></PlaceDetailProvider></ExploreProvider></LibraryGate></AccessibilityProvider></AppSettingsProvider></LibraryProvider>;
+  return <DatabaseProvider><LibraryProvider><AppSettingsProvider><AccessibilityProvider><LibraryGate><TripsProvider><TripsGate><ExploreProvider><PlaceDetailProvider><Navigation /></PlaceDetailProvider></ExploreProvider></TripsGate></TripsProvider></LibraryGate></AccessibilityProvider></AppSettingsProvider></LibraryProvider></DatabaseProvider>;
 }

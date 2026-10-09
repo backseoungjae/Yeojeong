@@ -5,9 +5,12 @@ export interface SqlConnection {
   getFirstAsync<T>(sql: string, ...values: SqlValue[]): Promise<T | null>;
   getAllAsync<T>(sql: string, ...values: SqlValue[]): Promise<T[]>;
   closeAsync(): Promise<void>;
+  closeSync?(): void;
 }
-export class StorageError extends Error {
-  readonly kind: 'initialization' | 'version' | 'read' | 'write' | 'data';
+// Repository의 업무 오류는 안전한 고정 메시지로 전달하고, 원본 DB 오류는 밖으로 전달하지 않는다.
+export class RepositoryError extends Error {}
+export class StorageError extends RepositoryError {
+  readonly kind: 'initialization' | 'locked' | 'version' | 'read' | 'write' | 'data';
   constructor(kind: StorageError['kind']) { super(`Local storage: ${kind}`); this.name = 'StorageError'; this.kind = kind; }
 }
 export const migrations = [
@@ -29,6 +32,24 @@ export const migrations = [
   CREATE INDEX recent_searches_sequence ON recent_searches(sequence DESC);
   DELETE FROM recent_places WHERE place_id NOT IN (SELECT place_id FROM recent_places ORDER BY sequence DESC LIMIT 20);
   DELETE FROM recent_searches WHERE keyword NOT IN (SELECT keyword FROM recent_searches ORDER BY sequence DESC LIMIT 10);`,
+  `CREATE TABLE trips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL CHECK(length(trim(name)) > 0),
+    start_date TEXT NOT NULL, end_date TEXT NOT NULL CHECK(end_date >= start_date),
+    created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, revision INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE itinerary_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    place_id TEXT NOT NULL REFERENCES place_snapshots(id) ON DELETE RESTRICT,
+    date TEXT NOT NULL, position INTEGER NOT NULL CHECK(position >= 0), memo TEXT NOT NULL DEFAULT '',
+    UNIQUE(trip_id,date,place_id), UNIQUE(trip_id,date,position)
+  );
+  CREATE INDEX itinerary_items_trip ON itinerary_items(trip_id,date,position);
+  CREATE TRIGGER itinerary_date_insert BEFORE INSERT ON itinerary_items
+    WHEN NOT EXISTS (SELECT 1 FROM trips WHERE id=NEW.trip_id AND NEW.date BETWEEN start_date AND end_date)
+    BEGIN SELECT RAISE(ABORT,'Invalid itinerary date'); END;
+  CREATE TRIGGER itinerary_date_update BEFORE UPDATE OF date,trip_id ON itinerary_items
+    WHEN NOT EXISTS (SELECT 1 FROM trips WHERE id=NEW.trip_id AND NEW.date BETWEEN start_date AND end_date)
+    BEGIN SELECT RAISE(ABORT,'Invalid itinerary date'); END;`,
 ] as const;
 export async function migrateDatabase(db: SqlConnection) {
   await db.execAsync('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL;');
@@ -45,24 +66,33 @@ export async function migrateDatabase(db: SqlConnection) {
 export class AppDatabase {
   private open: () => Promise<SqlConnection>;
   private ready?: Promise<SqlConnection>;
+  private connection?: SqlConnection;
   private tail: Promise<void> = Promise.resolve();
   constructor(open: () => Promise<SqlConnection>) { this.open = open; }
   initialize(): Promise<SqlConnection> {
     if (!this.ready) {
       this.ready = this.open().then(async db => {
-        try { await migrateDatabase(db); return db; }
+        try { await migrateDatabase(db); this.connection = db; return db; }
         catch (error) { await db.closeAsync().catch(() => {}); throw error; }
       }).catch(error => { this.ready = undefined; throw error instanceof StorageError ? error : new StorageError('initialization'); });
     }
     return this.ready;
   }
+  releaseForPageExit = () => {
+    const db = this.connection;
+    if (!db?.closeSync) return;
+    // 웹 pagehide에서는 비동기 정리를 기다릴 수 없으므로 SDK의 동기 종료로 OPFS 잠금을 해제한다.
+    this.connection = undefined;
+    this.ready = undefined;
+    try { db.closeSync(); } catch { /* 종료 중 미완료 작업은 SQLite가 복구하며 사용자 데이터를 지우지 않는다. */ }
+  };
   private enqueue<T>(work: (db: SqlConnection) => Promise<T>): Promise<T> {
     const task = this.tail.then(async () => work(await this.initialize()));
     this.tail = task.then(() => {}, () => {});
     return task;
   }
   read<T>(work: (db: SqlConnection) => Promise<T>): Promise<T> {
-    return this.enqueue(async db => { try { return await work(db); } catch (error) { throw error instanceof StorageError ? error : new StorageError('read'); } });
+    return this.enqueue(async db => { try { return await work(db); } catch (error) { throw error instanceof RepositoryError ? error : new StorageError('read'); } });
   }
   transaction<T>(work: (db: SqlConnection) => Promise<T>): Promise<T> {
     // 모든 조회/쓰기를 한 연결의 큐로 직렬화해 다른 작업이 열린 트랜잭션에 섞이지 않도록 한다.
@@ -73,7 +103,7 @@ export class AppDatabase {
       catch (error) {
         try { await db.execAsync('ROLLBACK'); }
         catch { this.ready = undefined; await db.closeAsync().catch(() => {}); }
-        throw error instanceof StorageError ? error : new StorageError('write');
+        throw error instanceof RepositoryError ? error : new StorageError('write');
       }
     });
   }

@@ -1,4 +1,5 @@
 import { SavePlaceButton } from '@/features/library/components/SavePlaceButton';
+import { AddPlaceToTrip } from '@/features/trips/components/AddPlaceToTrip';
 import { useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { useI18n } from '@/shared/i18n/useI18n';
@@ -16,7 +17,7 @@ import { DetailAreaError } from '../components/DetailAreaError';
 import { PlacePhotoGallery } from '../components/PlacePhotoGallery';
 import { PlaceInfoRow } from '../components/PlaceInfoRow';
 export default function PlaceDetailScreen() {
-  const params = useLocalSearchParams<{ placeId?: string | string[] }>();
+  const params = useLocalSearchParams<{ placeId?: string | string[]; addTripId?: string }>();
   const identifier = typeof params.placeId === 'string' ? params.placeId : '';
   const { t, language } = useI18n();
   const { spacing } = useTheme();
@@ -40,8 +41,7 @@ export default function PlaceDetailScreen() {
         {detail.place.language !== language && <Text>{t('place.originalLanguage', { language: t(detail.place.language === 'ko' ? 'settings.korean' : 'settings.english') })}</Text>}
       </View>
       <SavePlaceButton place={detail.place} />
-      <Button label={t('place.addToTrip')} disabled variant="secondary" />
-      <Text variant="caption" tone="muted">{t('place.actionsPending')}</Text>
+      <AddPlaceToTrip place={detail.place} initialTripId={typeof params.addTripId === 'string' ? params.addTripId : undefined} />
       <Section title={t('place.description')}><Text selectable>{detail.description ?? t(offline ? 'local.offlineDescription' : 'place.noDescription')}</Text></Section>
       <Section title={t('place.address')}>
         <Text selectable>{detail.address ?? t('place.noAddress')}</Text>

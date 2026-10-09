@@ -1,6 +1,7 @@
+import { writeSnapshot } from '../../../shared/database/placeSnapshots.ts';
 import { AppDatabase, StorageError, type SqlConnection } from '../../../shared/database/database.ts';
 import type { Place } from '../../../shared/models/place.ts';
-import { parseSnapshot, serializeSnapshot, type LibraryData, type StoredPlace } from '../models/library.ts';
+import { parseSnapshot, type LibraryData, type StoredPlace } from '../models/library.ts';
 interface SnapshotRow { id: string; service: string; content_id: string; language: string; snapshot_json: string; captured_at: number }
 async function load(db: SqlConnection): Promise<LibraryData> {
   const rows = await db.getAllAsync<SnapshotRow>('SELECT * FROM place_snapshots WHERE id IN (SELECT place_id FROM saved_places UNION SELECT place_id FROM recent_places)');
@@ -21,13 +22,6 @@ async function load(db: SqlConnection): Promise<LibraryData> {
   const recentRows = await db.getAllAsync<{ place_id: string; viewed_at: number }>('SELECT * FROM recent_places ORDER BY sequence DESC, place_id LIMIT 20');
   const searches = await db.getAllAsync<{ keyword: string; searched_at: number }>('SELECT keyword, searched_at FROM recent_searches ORDER BY sequence DESC, keyword LIMIT 10');
   return { saved: savedRows.map(row => toStored(row.place_id, row.saved_at)), recent: recentRows.map(row => toStored(row.place_id, row.viewed_at)), searches: searches.map(row => ({ keyword: row.keyword, searchedAt: row.searched_at })) };
-}
-async function writeSnapshot(db: SqlConnection, place: Place, timestamp: number) {
-  const json = serializeSnapshot(place);
-  // 저장 당시 스냅샷은 일반 조회로 덮어쓰지 않는다. 저장되지 않은 최근 장소는 새 조회 결과를 반영한다.
-  await db.runAsync(`INSERT INTO place_snapshots (id,service,content_id,language,snapshot_json,captured_at) VALUES (?,?,?,?,?,?)
-    ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json,captured_at=excluded.captured_at
-    WHERE NOT EXISTS (SELECT 1 FROM saved_places WHERE place_id=excluded.id)`, place.id, place.service, place.contentId, place.language, json, timestamp);
 }
 export function createLibraryRepository(database: AppDatabase, now = Date.now) {
   return {
