@@ -13,6 +13,35 @@ const item = (id, language = 'ko') => ({ contentid: id, contenttypeid: language 
 const repo = send => createPlaceRepository(createTourClient({ common: 'mock-key' }, send));
 const page = (ids, number = 1, hasNext = false) => ({ places: ids.map(id => ({ id, name: id })), page: number, totalCount: 50, hasNext });
 const fakeRepo = load => ({ page: load, cachedPage: () => undefined, regions: async () => [] });
+test('통신 실패 뒤 같은 검색어 명시 제출은 새 요청, 요청 중 제출은 중복 호출하지 않음', async () => {
+  for (const failure of [new TourError('network'), new TourError('timeout'), new TourError('http', undefined, 503)]) {
+    let calls = 0; const recovery = deferred(); const requests = [];
+    const store = new ExploreStore(fakeRepo(async (language, conditions, number) => {
+      calls++; requests.push({ ...conditions, page: number });
+      if (calls === 1) throw failure;
+      return recovery.promise;
+    }), 'ko');
+    store.setKeywordInput('  palace  '); store.submit(); await tick();
+    assert.equal(store.getSnapshot().error, failure);
+    store.ensureLoaded(); store.apply(store.getSnapshot().conditions); assert.equal(calls, 1);
+    store.setKeywordInput('palace'); store.submit(); store.submit(); store.ensureLoaded();
+    assert.equal(calls, 2); assert.equal(store.getSnapshot().loading, true);
+    assert.deepEqual(requests.map(value => [value.keyword, value.page]), [['palace', 1], ['palace', 1]]);
+    recovery.resolve(page(['recovered'])); await tick();
+    assert.equal(store.getSnapshot().error, undefined);
+    assert.equal(store.getSnapshot().places[0].id, 'recovered');
+    store.submit(); assert.equal(calls, 2);
+  }
+});
+test('인증·할당량 오류는 같은 조건의 재검색으로도 자동 요청을 재개하지 않음', async () => {
+  for (const kind of ['authentication', 'quota']) {
+    let calls = 0;
+    const store = new ExploreStore(fakeRepo(async () => { calls++; throw new TourError(kind); }), 'ko');
+    store.setKeywordInput('palace'); store.submit(); await tick();
+    store.ensureLoaded(); store.loadNext(); store.submit(); await tick();
+    assert.equal(calls, 1); assert.equal(store.getSnapshot().error.kind, kind);
+  }
+});
 test('상위 지역 변경은 하위 선택 초기화, 검색 유형 결합은 거부', () => {
   assert.equal(changeRegion({ ...defaultConditions, regionCode: '11', districtCode: '11110' }, '26').districtCode, undefined);
   assert.equal(changeRegion({ ...defaultConditions, regionCode: '11', districtCode: '11110' }).regionCode, undefined);

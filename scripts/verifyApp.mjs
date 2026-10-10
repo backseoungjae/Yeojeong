@@ -52,6 +52,8 @@ try {
   debugEvaluate=evaluate;
   const click=label=>evaluate(`(()=>{const element=[...document.querySelectorAll('[role="button"],[role="tab"],button,a')].filter(el=>el.getClientRects().length>0 && getComputedStyle(el).visibility!=='hidden' && !el.closest('[aria-hidden="true"]')).find(el=>el.getAttribute('aria-label')===${JSON.stringify(label)}||el.textContent.trim()===${JSON.stringify(label)});if(!element)throw new Error('Missing control: '+${JSON.stringify(label)});element.click();return true;})()`);
   const waitText=async text=>{for(let i=0;i<150;i++){if(await evaluate(`(document.body?.innerText ?? "").includes(${JSON.stringify(text)})`))return;await delay(100);}throw new Error('Missing text: '+text);};
+  const waitFocus=label=>evaluate(`new Promise((resolve,reject)=>{const deadline=performance.now()+5000;function check(){if(document.activeElement?.getAttribute('aria-label')===${JSON.stringify(label)})return resolve(true);if(performance.now()>deadline)return reject(new Error('Missing focus: '+${JSON.stringify(label)}));requestAnimationFrame(check);}check();})`);
+  const settleFocus=()=>evaluate(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
   const report=value=>console.log(JSON.stringify(value));
   await cdp('Runtime.enable');await cdp('Page.enable');
   await cdp('Page.addScriptToEvaluateOnNewDocument',{source:`window.__sqliteFailures=[];const NativeWorker=Worker;window.Worker=class extends NativeWorker {constructor(...args){super(...args);this.addEventListener('message',event=>{if(event.data?.error)window.__sqliteFailures.push(String(event.data.error));});}};`});
@@ -258,9 +260,17 @@ try {
     assert.equal(await evaluate(`document.querySelector('[aria-label="Remove English place 1 from itinerary"]')===null`),true);
     await click('More actions for English place 1');await delay(120);assert.equal(await evaluate(`document.activeElement.getAttribute('aria-label')`),'Remove English place 1 from itinerary');
     await click('Close actions');await delay(120);assert.equal(await evaluate(`document.activeElement.getAttribute('aria-label')`),'More actions for English place 1');
+    // 빠른 조작은 초기 포커스를 기다리지 않는다. 예약된 프레임이 끝난 뒤에도 복귀가 유지돼야 한다.
     await click('Add memo for English place 1');
-    await setInput('Memo for English place 1','Unsaved fixture');await click('Discard memo changes for English place 1');await click('Keep editing');await delay(120);assert.equal(await evaluate('document.activeElement.getAttribute("aria-label")'),'Discard memo changes for English place 1');
-    await setInput('Memo for English place 1','Offline browser fixture memo');await click('Save memo for English place 1');await waitText('Memo saved.');await delay(120);
+    await setInput('Memo for English place 1','Rapid unsaved fixture');await click('Discard memo changes for English place 1');await click('Keep editing');await waitFocus('Discard memo changes for English place 1');await settleFocus();
+    assert.equal(await evaluate('document.activeElement.getAttribute("aria-label")'),'Discard memo changes for English place 1');
+    await click('Discard memo changes for English place 1');await click('Confirm memo discard for English place 1');await waitFocus('Add memo for English place 1');
+    assert.equal(await evaluate(`document.querySelectorAll('textarea').length`),0);
+    report({state:'passed',check:'Rapid memo open/edit/discard/keep: returned focus survives pending animation frames; unsaved draft discarded separately.'});
+    // 정상 흐름은 임의 시간 대신 초기 포커스 완료를 기다린다.
+    await click('Add memo for English place 1');await waitFocus('Memo for English place 1');
+    await setInput('Memo for English place 1','Unsaved fixture');await click('Discard memo changes for English place 1');await waitFocus('Discard only the unsaved memo for English place 1. Changes to other items are retained.');await click('Keep editing');await waitFocus('Discard memo changes for English place 1');await settleFocus();assert.equal(await evaluate('document.activeElement.getAttribute("aria-label")'),'Discard memo changes for English place 1');
+    await setInput('Memo for English place 1','Offline browser fixture memo');await click('Save memo for English place 1');await waitText('Memo saved.');await waitFocus('Edit memo for English place 1');
     assert.equal(await evaluate(`document.querySelectorAll('textarea').length`),0);await waitText('Offline browser fixture memo');
     assert.equal(await evaluate(`document.activeElement.getAttribute('aria-label')`),'Edit memo for English place 1');
     await click('Edit order');await click('Move English place 2 up');await waitText('Stop 1 · English place 2');await click('Finish editing order');

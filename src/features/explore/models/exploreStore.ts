@@ -35,7 +35,13 @@ export class ExploreStore {
     }
   };
   apply = (conditions: ExploreConditions) => this.change(this.state.language, normalizeConditions(conditions));
-  submit = () => this.apply({ ...this.state.conditions, keyword: this.state.keywordInput, type: 'all' });
+  submit = () => {
+    const conditions = normalizeConditions({ ...this.state.conditions, keyword: this.state.keywordInput, type: 'all' });
+    const { error, language } = this.state;
+    const communicationFailure = error && (error.kind === 'network' || error.kind === 'timeout' || (error.kind === 'http' && (error.status ?? 0) >= 500));
+    if (communicationFailure && queryKey(language, conditions) === queryKey(language, this.state.conditions)) this.retry();
+    else this.apply(conditions);
+  };
   reset = () => { this.setKeywordInput(''); this.apply(defaultConditions); };
   private change(language: ContentLanguage, conditions: ExploreConditions) {
     if (queryKey(language, conditions) === queryKey(this.state.language, this.state.conditions)) { this.ensureLoaded(); return; }
