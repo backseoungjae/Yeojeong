@@ -1,7 +1,5 @@
-import { RegionSelector } from "@/features/explore/components/RegionSelector";
 import { RecentPlaces } from "@/features/library/components/RecentPlaces";
-import { PlaceCard } from "@/features/places/components/PlaceCard";
-import { formatDate, formatTimestamp } from "@/shared/i18n/format";
+import { formatDate } from "@/shared/i18n/format";
 import { useI18n } from "@/shared/i18n/useI18n";
 import { useTheme } from "@/shared/theme/useTheme";
 import { Button } from "@/shared/ui/Button";
@@ -86,33 +84,6 @@ export default function HomeScreen() {
           </>
         )}
         <Text tone="muted">{t("home.offlineHint")}</Text>
-      </Section>
-      <Section title={t("home.regions")}>
-        <RegionSelector value={home.region} onChange={home.setRegion} />
-        <Button label={t("home.browseRegion")} onPress={home.browseRegion} />
-      </Section>
-      <Section title={t("home.curations")}>
-        <Text tone="muted">{t("home.curationHint")}</Text>
-        {home.curations.map((item) => (
-          <Section key={item.place.id} title={t(`home.theme.${item.theme}`)}>
-            <Text>{t(`home.theme.${item.theme}Description`)}</Text>
-            <PlaceCard
-              place={item.place}
-              regionLabel={item.place.address ?? t("explore.regionUnknown")}
-              onPress={() =>
-                router.push({
-                  pathname: "/places/[placeId]",
-                  params: { placeId: item.place.id },
-                })
-              }
-            />
-            <Text variant="caption" tone="muted">
-              {t("home.verified", {
-                value: formatTimestamp(item.verifiedAt, language),
-              })}
-            </Text>
-          </Section>
-        ))}
       </Section>
       <RecentPlaces />
     </Screen>
