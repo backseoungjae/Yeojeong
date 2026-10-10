@@ -141,6 +141,16 @@ try {
     await search('slow');await delay(50);await search('fast');await waitText('한국어 장소 9');await delay(1400);assert.ok(!(await visibleText()).includes('한국어 장소 1'));
     const tree=await cdp('Accessibility.getFullAXTree');assert.ok(tree.nodes.some(node=>node.role?.value==='button'));assert.ok(tree.nodes.some(node=>node.role?.value==='heading'));
     await search('empty');await waitText('조건에 맞는 장소가 없어요');await search('fail');await waitText('일시적인 통신 오류');await search('auth');await waitText('인증');await search('quota');await waitText('호출');
+    await waitText('quota');await delay(200);
+    const recentCount=()=>evaluate(`[...document.querySelectorAll('[role="button"]')].filter(el=>el.getClientRects().length>0 && !el.closest('[aria-hidden="true"]') && (el.getAttribute('aria-label')??'').endsWith(' 다시 검색')).length`);
+    assert.equal(await recentCount(),3);
+    assert.equal(await evaluate(`document.querySelector('[aria-label^="최근 검색어 삭제:"]')===null`),true);
+    await click('더보기');await delay(120);assert.ok(await recentCount()>3);await click('접기');await delay(120);assert.equal(await recentCount(),3);
+    await click('관리');await delay(120);assert.ok(await recentCount()>3);assert.equal(await wide(),false);await checkScale();
+    await click('최근 검색어 삭제: slow');await delay(200);assert.equal(await evaluate(`document.querySelector('[aria-label="slow 다시 검색"]')===null`),true);
+    await click('관리 완료');await click('더보기');await click('fast 다시 검색');await waitText('한국어 장소 9');await delay(200);
+    await click('관리');await click('최근 검색어 전체 삭제');await delay(200);
+    assert.equal(await recentCount(),0);assert.equal(await evaluate(`document.querySelector('[aria-label="관리"]')===null`),true);
     for(const record of structured){assert.deepEqual(Object.keys(record),['event','scope','kind','at']);assert.ok(!JSON.stringify(record).includes('serviceKey'));}
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/trips/new'});await waitText('여행 이름');await checkScale();
     await setInput('여행 이름',tripName);await chooseDate('시작일',fixtureStart,'ko');await chooseDate('종료일',fixtureEnd,'ko');await click('여행 저장');await waitText(tripName);

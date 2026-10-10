@@ -3,7 +3,6 @@ import { Platform, View } from 'react-native';
 import { ConfirmationPanel } from '@/shared/ui/ConfirmationPanel';
 import { useSettings } from '../hooks/useSettings';
 import { useLibrary } from '@/features/library/hooks/LibraryProvider';
-import { router } from 'expo-router';
 import { useI18n } from '@/shared/i18n/useI18n';
 import { useAccessibility } from '@/shared/accessibility/AccessibilityProvider';
 import { Screen } from '@/shared/ui/Screen';
@@ -45,11 +44,6 @@ export default function SettingsScreen() {
       {settings.error && <Text tone="danger" accessibilityRole="alert">{t('settings.deleteFailed')}</Text>}
       {settings.completed && <Text accessibilityRole="alert" accessibilityLiveRegion="polite">{t('settings.deleted')}</Text>}
     </Section>
-    {__DEV__ && <Section title={t('dev.title')}>
-      <Button label={t('dev.gallery')} variant="secondary" onPress={() => router.push('/dev/gallery')} />
-      <Button label={t('dev.recovery')} variant="secondary" onPress={() => router.push('/dev/error')} />
-      <Button label={t('dev.api')} variant="secondary" onPress={() => router.push('/dev/api')} />
-    </Section>}
     {settings.confirming && <ConfirmationPanel returnTarget={deleteButton} title={t('settings.deleteTitle')} description={t('settings.deleteConfirm', settings.counts)}>
       <Text>{t('settings.deleteScope')}</Text>
       <Text>{t(Platform.OS === 'web' ? 'settings.webCacheScope' : 'settings.nativeCacheScope')}</Text>

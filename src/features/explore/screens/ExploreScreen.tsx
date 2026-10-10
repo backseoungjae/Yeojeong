@@ -70,7 +70,7 @@ export default function ExploreScreen() {
         {draft && <ExploreFilters returnTarget={filterButton} value={draft} onChange={setDraft} onCancel={dismissFilters} onApply={() => { store.apply(draft); dismissFilters(); }} />}
         <Text variant="label">{t('explore.applied')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-          {Boolean(conditions.keyword) && <Chip label={t('explore.removeKeyword', { value: conditions.keyword })} onPress={() => { store.setKeywordInput(''); store.apply({ ...conditions, keyword: '' }); dismissFilters(); }} />}
+          {Boolean(conditions.keyword) && <Text>{t('explore.appliedKeyword', { value: conditions.keyword })}</Text>}
           {conditions.regionCode ? <Chip label={t('explore.removeRegion', { value: regionName })} onPress={() => { store.apply(changeRegion(conditions)); dismissFilters(); }} /> : <Text tone="muted">{t('explore.nationwide')}</Text>}
           {conditions.districtCode && <Chip label={t('explore.removeDistrict', { value: districtName })} onPress={() => { store.apply({ ...conditions, districtCode: undefined }); dismissFilters(); }} />}
           {conditions.type !== 'all' ? <Chip label={t('explore.removeType', { value: t(`explore.type.${conditions.type}`) })} onPress={() => { store.apply({ ...conditions, type: 'all' }); dismissFilters(); }} /> : <Text tone="muted">{t('explore.type.all')}</Text>}

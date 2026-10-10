@@ -1,4 +1,8 @@
 const ko = {
+  'local.manageSearches': '관리',
+  'local.finishSearchManagement': '관리 완료',
+  'local.expandSearches': '더보기',
+  'local.collapseSearches': '접기',
   'trip.editOrder': '순서 편집',
   'trip.finishOrder': '순서 편집 완료',
   'trip.moreActions': '{name} 더보기',
@@ -156,7 +160,7 @@ const ko = {
   'explore.apply': '필터 적용',
   'explore.cancel': '편집 취소',
   'explore.applied': '적용된 조건',
-  'explore.removeKeyword': '검색어 해제: {value}',
+  'explore.appliedKeyword': '검색어: {value}',
   'explore.removeRegion': '시·도 해제: {value}',
   'explore.removeDistrict': '시·군·구 해제: {value}',
   'explore.removeType': '유형 해제: {value}',
@@ -282,6 +286,10 @@ const ko = {
 } as const;
 export type MessageKey = keyof typeof ko;
 const en: Record<MessageKey, string> = {
+  'local.manageSearches': 'Manage',
+  'local.finishSearchManagement': 'Done',
+  'local.expandSearches': 'Show more',
+  'local.collapseSearches': 'Show less',
   'trip.editOrder': 'Edit order',
   'trip.finishOrder': 'Finish editing order',
   'trip.moreActions': 'More actions for {name}',
@@ -439,7 +447,7 @@ const en: Record<MessageKey, string> = {
   'explore.apply': 'Apply filters',
   'explore.cancel': 'Cancel editing',
   'explore.applied': 'Applied conditions',
-  'explore.removeKeyword': 'Remove keyword: {value}',
+  'explore.appliedKeyword': 'Keyword: {value}',
   'explore.removeRegion': 'Remove province or city: {value}',
   'explore.removeDistrict': 'Remove district: {value}',
   'explore.removeType': 'Remove type: {value}',
