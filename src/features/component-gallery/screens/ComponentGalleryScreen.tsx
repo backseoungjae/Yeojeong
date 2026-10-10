@@ -10,6 +10,7 @@ import { Text } from '@/shared/ui/Text';
 import { Button } from '@/shared/ui/Button';
 import { IconButton } from '@/shared/ui/IconButton';
 import { TextField } from '@/shared/ui/TextField';
+import { DateField } from '@/shared/ui/DateField';
 import { Chip } from '@/shared/ui/Chip';
 import { Loading } from '@/shared/ui/Loading';
 import { Skeleton } from '@/shared/ui/Skeleton';
@@ -24,6 +25,7 @@ export default function ComponentGalleryScreen() {
   const [scale, setScale] = useState(1);
   const [selected, setSelected] = useState(false);
   const [input, setInput] = useState('');
+  const [date, setDate] = useState('2026-10-10');
   const [notice, setNotice] = useState<'gallery.action' | 'gallery.selected' | null>(null);
   return <Screen>
     <Text>{t('gallery.description')}</Text>
@@ -59,6 +61,8 @@ export default function ComponentGalleryScreen() {
         <TextField label={t('gallery.input')} placeholder={t('gallery.inputPlaceholder')} value={input} onChangeText={setInput} />
         <TextField label={t('gallery.errorInput')} error={t('gallery.inputError')} required />
         <TextField label={t('gallery.disabledInput')} editable={false} />
+        <DateField label={t('trip.viewDate')} value={date} minDate="2026-10-08" maxDate="2026-11-12" onChange={setDate} />
+        <DateField label={t('gallery.disabledInput')} value={date} disabled onChange={setDate} />
       </Section>
       <Section title={t('gallery.detailPreview')}>
         <Text tone="muted">{t('gallery.mockNotice')}</Text>

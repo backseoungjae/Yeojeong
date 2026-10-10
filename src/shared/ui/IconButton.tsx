@@ -1,12 +1,13 @@
 import { focusRing } from './focusRing';
-import { useState } from 'react';
-import { Pressable, type PressableProps } from 'react-native';
+import { useState, type Ref } from 'react';
+import { Pressable, type PressableProps, type View } from 'react-native';
 import { useTheme } from '../theme/useTheme';
 import { Icon, type IconName } from './Icon';
 export interface IconButtonProps extends Omit<PressableProps, 'children' | 'style' | 'accessibilityRole' | 'accessibilityLabel' | 'accessibilityState'> {
   icon: IconName;
   label: string;
   selected?: boolean;
+  ref?: Ref<View>;
 }
 export function IconButton({ icon, label, selected, disabled = false, ...props }: IconButtonProps) {
   const { colors, layout, radius, spacing } = useTheme();

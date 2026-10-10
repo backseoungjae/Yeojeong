@@ -1,4 +1,5 @@
 import { seoulToday, shiftDate } from '../src/features/trips/services/tripRules.ts';
+import { formatDate } from '../src/shared/i18n/format.ts';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile, stat, mkdtemp, writeFile } from 'node:fs/promises';
@@ -100,6 +101,16 @@ try {
   const visible=el=>el.getClientRects().length>0 && getComputedStyle(el).visibility!=='hidden' && !el.closest('[aria-hidden="true"]');
   const setInput=async(label,value)=>evaluate(`(()=>{const el=[...document.querySelectorAll('input,textarea')].find(el=>el.getClientRects().length>0 && !el.closest('[aria-hidden="true"]') && (el.getAttribute('aria-label')??'').includes(${JSON.stringify(label)}));if(!el)throw new Error('Missing input: '+${JSON.stringify(label)});Object.getOwnPropertyDescriptor(el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(el,${JSON.stringify(value)});el.dispatchEvent(new Event('input',{bubbles:true}));return true;})()`);
   const visibleText=()=>evaluate(`(()=>{const regions=[...document.querySelectorAll('[aria-hidden="true"]')];const before=regions.map(el=>el.style.display);regions.forEach(el=>el.style.display='none');const text=document.body.innerText;regions.forEach((el,i)=>el.style.display=before[i]);return text;})()`);
+  const openCalendar=async label=>{
+    const trigger=await evaluate(`[...document.querySelectorAll('[role="button"]')].find(el=>el.getClientRects().length>0 && !el.closest('[aria-hidden="true"]') && ((el.getAttribute('aria-label')??'').startsWith(${JSON.stringify(label)}+':') || (el.getAttribute('aria-label')??'').startsWith(${JSON.stringify(label)}+' ('))).getAttribute('aria-label')`);
+    await click(trigger);await delay(120);
+  };
+  const chooseDate=async(label,value,language)=>{
+    await openCalendar(label);
+    const month=formatDate(value,language,{year:'numeric',month:'long'});
+    for(let count=0;!(await visibleText()).includes(month) && count<2;count++){await click(language==='ko'?'다음 달':'Next month');await delay(120);}
+    await click(formatDate(value,language));await delay(120);
+  };
   const openPlace=async n=>{const label=await evaluate(`document.querySelector('[aria-label^="Open details for English place ${n},"]').getAttribute('aria-label')`);await click(label);};
   await cdp('Emulation.setTimezoneOverride',{timezoneId:'America/Los_Angeles'});
   const tripName='Home fixture trip';
@@ -132,7 +143,7 @@ try {
     await search('empty');await waitText('조건에 맞는 장소가 없어요');await search('fail');await waitText('일시적인 통신 오류');await search('auth');await waitText('인증');await search('quota');await waitText('호출');
     for(const record of structured){assert.deepEqual(Object.keys(record),['event','scope','kind','at']);assert.ok(!JSON.stringify(record).includes('serviceKey'));}
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/trips/new'});await waitText('여행 이름');await checkScale();
-    await setInput('여행 이름',tripName);await setInput('시작일',fixtureStart);await setInput('종료일',fixtureEnd);await click('여행 저장');await waitText(tripName);
+    await setInput('여행 이름',tripName);await chooseDate('시작일',fixtureStart,'ko');await chooseDate('종료일',fixtureEnd,'ko');await click('여행 저장');await waitText(tripName);
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/places/tourapi%3AKorService2%3A1'});await waitText('First line');await checkScale();
     await click('한국어 장소 1 일정에 추가');await delay(120);assert.equal(await evaluate('document.activeElement.getAttribute("role")'),'heading');
     const qualityChoice=await evaluate(`[...document.querySelectorAll('[role="button"]')].find(el=>(el.getAttribute('aria-label')??'').startsWith(${JSON.stringify(tripName)}+' ·')).getAttribute('aria-label')`);
@@ -187,7 +198,8 @@ try {
     offline=true;
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/trips/1'});await waitText(tripName);
     await waitText('Stop 1 · English place 2');await waitText('Stop 2 · English place 1');
-    assert.equal(await evaluate(`[...document.querySelectorAll('textarea')].find(el=>(el.getAttribute('aria-label')??'').includes('English place 1')).value`),'Offline browser fixture memo');
+    await waitText('Offline browser fixture memo');
+    assert.equal(await evaluate(`document.querySelectorAll('textarea').length`),0);
     report({state:'passed',check:'Browser process restart restores offline memo, order and original-language place snapshots; API network denied.'});
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/settings'});await waitText('Appearance');await click('Delete all local data');await waitText('Delete all local data?');await click('Cancel');await click('My trips');await waitText(tripName);
     await click('Settings');await click('Delete all local data');await click('Confirm deletion of all local data');
@@ -206,18 +218,43 @@ try {
     report({state:'passed',check:'Full deletion cancel keeps records; confirmed reset clears real SQLite, snapshots and preferences; reload uses device defaults and no trips. Browser HTTP cache exclusion is visible.'});
   }else{
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/settings'});await waitText('화면 테마');await click('English');await waitText('Appearance');await click('Dark');
-    await click('Home');await waitText('No trip is in progress');await waitText('Places by theme');await waitText('Seoul Forest');await waitText('ARKO Art Center');await waitText('105405 Magok');
-    await click('Busan');await click('Explore the selected region');await waitText('English place 1');
+    await click('Home');await waitText('No trip is in progress');
+    await click('Explore');await waitText('English place 1');
     const latest=calls.filter(c=>c.endpoint==='areaBasedList2');assert.ok(latest.length);
     await click('Save English place 1');await openPlace(1);await waitText('First line');await click('Add English place 1 to an itinerary');await click('Create a trip');
-    await setInput('Trip name',tripName);await setInput('Start date',fixtureStart);await setInput('End date',fixtureEnd);await click('Save trip');await waitText('Choose a trip');await click('Add place on this date');await waitText('Place added to the itinerary.');
+    await setInput('Trip name',tripName);await chooseDate('Start date',fixtureStart,'en');await chooseDate('End date',fixtureEnd,'en');await click('Save trip');await waitText('Choose a trip');await click('Add place on this date');await waitText('Place added to the itinerary.');
     await click('Close place addition');await click('Back');await openPlace(2);await waitText('English place 2');await click('Add English place 2 to an itinerary');
     const choice=await evaluate(`[...document.querySelectorAll('[role="button"]')].find(el=>(el.getAttribute('aria-label')??'').startsWith(${JSON.stringify(tripName)}+' ·')).getAttribute('aria-label')`);await click(choice);await click('Add place on this date');await waitText('Place added to the itinerary.');await click('View trip itinerary');await waitText('Stop 1 · English place 1');
+    await openCalendar('Date to view');
+    for(const outside of [shiftDate(fixtureStart,-1),shiftDate(fixtureEnd,1)]){
+      const disabled=await evaluate(`(()=>{const el=[...document.querySelectorAll('[role="button"]')].find(el=>el.getClientRects().length>0 && el.getAttribute('aria-label')===${JSON.stringify(formatDate(outside,'en'))});return !el || el.getAttribute('aria-disabled')==='true';})()`);
+      assert.equal(disabled,true);
+    }
+    await click('Close calendar');await chooseDate('Date to view',fixtureEnd,'en');
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Next day"]').getAttribute('aria-disabled')`),'true');
+    await chooseDate('Date to view',fixtureStart,'en');await waitText('Stop 1 · English place 1');
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Previous day"]').getAttribute('aria-disabled')`),'true');
+    assert.equal(await evaluate(`(()=>{const previous=document.querySelector('[aria-label="Previous day"]').getBoundingClientRect(),next=document.querySelector('[aria-label="Next day"]').getBoundingClientRect();return Math.abs(previous.top-next.top)<1 && previous.right<=next.left;})()`),true);
+    await click('Edit trip');await openCalendar('Start date');
+    const yesterday=shiftDate(fixtureStart,-1);
+    assert.equal(await evaluate(`(()=>{const el=[...document.querySelectorAll('[role="button"]')].find(el=>el.getClientRects().length>0 && el.getAttribute('aria-label')===${JSON.stringify(formatDate(yesterday,'en'))});return !el || el.getAttribute('aria-disabled')==='true';})()`),true);
+    await click('Close calendar');await click('Cancel');await waitText('Stop 1 · English place 1');
+    report({state:'passed',check:'Calendar range limits, inclusive trip endpoints, horizontal previous/next buttons and today minimum in edit screen; API mocked.'});
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/'});await waitText('Continue your trip');await waitText(tripName);await click('Open trip: '+tripName);await waitText('Stop 1 · English place 1');
     await cdp('Network.enable');await cdp('Network.setCacheDisabled',{cacheDisabled:true});await cdp('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});offline=true;
     await click('Delete trip');await waitText('Delete this trip?');await click('Cancel');await delay(120);assert.equal(await evaluate('document.activeElement.getAttribute("aria-label")'),'Delete trip');
+    assert.equal(await evaluate(`document.querySelectorAll('textarea').length`),0);
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Move English place 2 up"]')===null`),true);
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Remove English place 1 from itinerary"]')===null`),true);
+    await click('More actions for English place 1');await delay(120);assert.equal(await evaluate(`document.activeElement.getAttribute('aria-label')`),'Remove English place 1 from itinerary');
+    await click('Close actions');await delay(120);assert.equal(await evaluate(`document.activeElement.getAttribute('aria-label')`),'More actions for English place 1');
+    await click('Add memo for English place 1');
     await setInput('Memo for English place 1','Unsaved fixture');await click('Discard memo changes for English place 1');await click('Keep editing');await delay(120);assert.equal(await evaluate('document.activeElement.getAttribute("aria-label")'),'Discard memo changes for English place 1');
-    await setInput('Memo for English place 1','Offline browser fixture memo');await click('Save memo for English place 1');await waitText('Memo saved.');await click('Move English place 2 up');await waitText('Stop 1 · English place 2');
+    await setInput('Memo for English place 1','Offline browser fixture memo');await click('Save memo for English place 1');await waitText('Memo saved.');await delay(120);
+    assert.equal(await evaluate(`document.querySelectorAll('textarea').length`),0);await waitText('Offline browser fixture memo');
+    assert.equal(await evaluate(`document.activeElement.getAttribute('aria-label')`),'Edit memo for English place 1');
+    await click('Edit order');await click('Move English place 2 up');await waitText('Stop 1 · English place 2');await click('Finish editing order');
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Move English place 2 up"]')===null`),true);
     await click('Place details: English place 1');await waitText('captured earlier');await click('Unsave English place 1');await click('Back');await waitText('Stop 2 · English place 1');
     await cdp('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
     // Fresh full navigation creates new API caches. Keep only the app origin reachable.
@@ -227,7 +264,7 @@ try {
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/places/tourapi%3AEngService2%3A1'});await waitText('latest API returned no basic information');await waitText('English place 1');await waitText('captured earlier');
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/trips'});await waitText(tripName);await click('Open trip: '+tripName);await waitText('Stop 2 · English place 1');
     assert.deepEqual(errors.filter(value=>!value.includes('Failed to load resource')),[]);
-    report({state:'passed',check:'Actual SQLite WASM: new/existing home, editorial cards, region navigation, offline memo/order edits, unsave independence, API-unavailable snapshot and missing-photo fallback, missing latest place retains itinerary, 320px English. API/images mocked except separate CLI verification.'});
+    report({state:'passed',check:'Actual SQLite WASM: new/existing home, explore navigation, calendar trip creation, offline memo/order edits, unsave independence, API-unavailable snapshot and missing-photo fallback, missing latest place retains itinerary, 320px English. API/images mocked except separate CLI verification.'});
   }
 
 } catch(error) { console.error(JSON.stringify({state:'failed',check:'Browser verification',reason:String(error.message).slice(0,160)})); process.exitCode=1; } finally {socket?.close();const exited=chrome.exitCode===null?new Promise(resolve=>chrome.once('exit',resolve)):Promise.resolve();chrome.kill();await exited;await new Promise(resolve=>server.close(resolve));}

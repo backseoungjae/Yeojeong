@@ -66,7 +66,7 @@ export default function ExploreScreen() {
         <TextField fieldId="explore-keyword" label={t('explore.keyword')} placeholder={t('explore.keywordPlaceholder')} value={state.keywordInput} onChangeText={store.setKeywordInput} returnKeyType="search" onSubmitEditing={submit} />
         <Button label={t('explore.search')} onPress={submit} />
         <RecentSearches onSelect={recentSearch} />
-        <Button ref={filterButton} label={t('explore.editFilters')} variant="secondary" onPress={() => setDraft({ ...conditions })} />
+        <Button ref={filterButton} label={t('explore.editFilters')} variant="secondary" selected={draft !== null} onPress={() => setDraft(current => current === null ? { ...conditions } : null)} />
         {draft && <ExploreFilters returnTarget={filterButton} value={draft} onChange={setDraft} onCancel={dismissFilters} onApply={() => { store.apply(draft); dismissFilters(); }} />}
         <Text variant="label">{t('explore.applied')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>

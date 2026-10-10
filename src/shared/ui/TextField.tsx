@@ -1,5 +1,5 @@
 import { focusRing } from './focusRing';
-import { useId, useState } from 'react';
+import { useId, useState, type Ref } from 'react';
 import { TextInput, View, type TextInputProps, type TextStyle } from 'react-native';
 import { useTheme } from '../theme/useTheme';
 import { useI18n } from '../i18n/useI18n';
@@ -11,8 +11,9 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style' | 'accessib
   error?: string;
   required?: boolean;
   fieldId?: string;
+  labelRef?: Ref<View>;
 }
-export function TextField({ label, hint, error, fieldId, required = false, editable = true, ...props }: TextFieldProps) {
+export function TextField({ label, hint, error, fieldId, labelRef, required = false, editable = true, ...props }: TextFieldProps) {
   const { colors, spacing, radius, typography, layout } = useTheme();
   const { t } = useI18n();
   const scale = useFontPreview();
@@ -25,7 +26,9 @@ export function TextField({ label, hint, error, fieldId, required = false, edita
         borderRadius: radius.control, borderWidth: layout.focusWidth, borderColor: error ? colors.danger : focused ? colors.focus : colors.border,
         backgroundColor: editable ? colors.surface : colors.disabledBackground };
   return <View style={{ gap: spacing.sm }}>
-    <Text nativeID={`${id}-label`} variant="label">{accessibleLabel}</Text>
+    {labelRef ? <View ref={labelRef} accessible accessibilityRole="header" accessibilityLabel={accessibleLabel}>
+      <Text nativeID={`${id}-label`} variant="label">{accessibleLabel}</Text>
+    </View> : <Text nativeID={`${id}-label`} variant="label">{accessibleLabel}</Text>}
     <TextInput {...props} editable={editable} accessibilityLabel={accessibleLabel} accessibilityLabelledBy={`${id}-label`}
       accessibilityHint={error ?? hint} accessibilityState={{ disabled: !editable }} aria-disabled={!editable} aria-invalid={Boolean(error)} aria-required={required}
       aria-describedby={error || hint ? `${id}-description` : undefined} allowFontScaling

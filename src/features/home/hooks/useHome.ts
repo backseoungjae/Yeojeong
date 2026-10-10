@@ -1,13 +1,13 @@
-import { useLocalData } from '@/features/settings/hooks/LocalDataProvider';
-import { useState } from 'react';
-import { router } from 'expo-router';
 import { useExploreContext } from '@/features/explore/hooks/ExploreProvider';
 import { defaultConditions, type ExploreConditions } from '@/features/explore/models/exploreQuery';
+import { useLocalData } from '@/features/settings/hooks/LocalDataProvider';
 import { useTrips } from '@/features/trips/hooks/TripsProvider';
 import { useTripToday } from '@/features/trips/hooks/useTripToday';
 import { useI18n } from '@/shared/i18n/useI18n';
-import { homeTrip } from '../models/homeTrip';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import { curations } from '../models/curations';
+import { homeTrip } from '../models/homeTrip';
 export function useHome() {
   const { language } = useI18n();
   const localData = useLocalData();

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTrips } from './TripsProvider';
 import { TripError, type ItemResolution, type PeriodResolutions, type TripInput } from '../models/trip';
 import { outsidePeriod, validateTrip, seoulToday } from '../services/tripRules';
+import { isSelectableDate } from '@/shared/lib/datePicker';
 export function useTripEditor(tripId?: string) {
   const { trips, items, busy, error, store } = useTrips();
   const trip = trips.find(value => value.id === tripId);
@@ -17,7 +18,12 @@ export function useTripEditor(tripId?: string) {
   const dirty = !completedId && (input.name !== initial.name || input.startDate !== initial.startDate || input.endDate !== initial.endDate);
   return {
     input, affected, resolutions, reviewing, busy, dirty, completedId, missing: Boolean(tripId && !trip), error: validation ?? error,
-    setField: (field: keyof TripInput, value: string) => { setInput(previous => ({ ...previous, [field]: value })); setReviewing(false); setResolutions({}); setValidation(undefined); },
+    setField: (field: keyof TripInput, value: string) => {
+      if (field === 'startDate' && !isSelectableDate(value, seoulToday())) return;
+      if (field === 'endDate' && !isSelectableDate(value, input.startDate)) return;
+      setInput(previous => ({ ...previous, [field]: value, ...(field === 'startDate' && value > previous.endDate ? { endDate: value } : {}) }));
+      setReviewing(false); setResolutions({}); setValidation(undefined);
+    },
     resolve: (id: string, value: ItemResolution) => setResolutions(previous => ({ ...previous, [id]: value })),
     cancelReview: () => { setReviewing(false); setResolutions({}); setInput(previous => ({ ...previous, startDate: initial.startDate, endDate: initial.endDate })); setValidation(undefined); },
     discard: () => { setInput(initial); setReviewing(false); setResolutions({}); },
