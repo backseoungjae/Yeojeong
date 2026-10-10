@@ -1,4 +1,10 @@
 const ko = {
+  'local.manageRecent': '관리',
+  'local.finishRecentManagement': '관리 완료',
+  'local.manageRecentLabel': '최근 본 장소 관리',
+  'local.finishRecentManagementLabel': '최근 본 장소 관리 완료',
+  'local.expandRecent': '최근 본 장소 더보기',
+  'local.collapseRecent': '최근 본 장소 접기',
   'local.manageSearches': '관리',
   'local.finishSearchManagement': '관리 완료',
   'local.expandSearches': '더보기',
@@ -286,6 +292,12 @@ const ko = {
 } as const;
 export type MessageKey = keyof typeof ko;
 const en: Record<MessageKey, string> = {
+  'local.manageRecent': 'Manage',
+  'local.finishRecentManagement': 'Done',
+  'local.manageRecentLabel': 'Manage recently viewed places',
+  'local.finishRecentManagementLabel': 'Finish managing recently viewed places',
+  'local.expandRecent': 'Show more recently viewed places',
+  'local.collapseRecent': 'Show fewer recently viewed places',
   'local.manageSearches': 'Manage',
   'local.finishSearchManagement': 'Done',
   'local.expandSearches': 'Show more',

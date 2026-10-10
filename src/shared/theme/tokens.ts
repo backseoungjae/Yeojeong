@@ -29,4 +29,4 @@ export const typography = {
   caption: { fontSize: 13, lineHeight: 20, fontWeight: '400' },
 } as const;
 export const motion = { feedback: 120, transition: 220, skeleton: 1100 } as const;
-export const layout = { contentWidth: 760, touchTarget: 48, borderWidth: 1, focusWidth: 2 } as const;
+export const layout = { contentWidth: 760, touchTarget: 48, thumbnailSize: 80, borderWidth: 1, focusWidth: 2 } as const;

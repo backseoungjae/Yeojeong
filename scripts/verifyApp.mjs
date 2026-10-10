@@ -274,6 +274,22 @@ try {
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/places/tourapi%3AEngService2%3A1'});await waitText('latest API returned no basic information');await waitText('English place 1');await waitText('captured earlier');
     await cdp('Page.navigate',{url:'http://127.0.0.1:8088/trips'});await waitText(tripName);await click('Open trip: '+tripName);await waitText('Stop 2 · English place 1');
     assert.deepEqual(errors.filter(value=>!value.includes('Failed to load resource')),[]);
+    missing=false;
+    for(const id of [3,4]){await cdp('Page.navigate',{url:'http://127.0.0.1:8088/places/tourapi%3AEngService2%3A'+id});await waitText('English place '+id);await waitText('First line');await delay(200);}
+    await cdp('Page.navigate',{url:'http://127.0.0.1:8088/'});await waitText('Recently viewed places');await delay(200);
+    const recentPlaceCount=()=>evaluate(`[...document.querySelectorAll('[role="button"]')].filter(el=>el.getClientRects().length>0 && !el.closest('[aria-hidden="true"]') && (el.getAttribute('aria-label')??'').startsWith('Open details for English place')).length`);
+    assert.equal(await recentPlaceCount(),3);
+    assert.equal(await evaluate(`[...document.querySelectorAll('[role="button"]')].filter(el=>el.getClientRects().length>0 && !el.closest('[aria-hidden="true"]')).some(el=>/^(Save English place|Unsave English place|Add English place|Remove .* from recent history)/.test(el.getAttribute('aria-label')??''))`),false);
+    await click('Show more recently viewed places');await delay(120);assert.ok(await recentPlaceCount()>3);
+    await click('Show fewer recently viewed places');await delay(120);assert.equal(await recentPlaceCount(),3);
+    await click('Manage recently viewed places');await delay(120);assert.ok(await recentPlaceCount()>3);
+    await click('Remove English place 1 from recent history');await delay(200);
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Remove English place 1 from recent history"]')===null`),true);
+    assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);
+    await click('Clear recently viewed places');
+    await delay(200);await waitText('No recently viewed places yet.');
+    await click('Open trip: '+tripName);await waitText('Stop 2 · English place 1');
+    report({state:'passed',check:'Recent place cards: latest three, show more/less, management-only removal and clear; clearing history preserves itinerary; 320px English, API mocked.'});
     report({state:'passed',check:'Actual SQLite WASM: new/existing home, explore navigation, calendar trip creation, offline memo/order edits, unsave independence, API-unavailable snapshot and missing-photo fallback, missing latest place retains itinerary, 320px English. API/images mocked except separate CLI verification.'});
   }
 
