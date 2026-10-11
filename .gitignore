@@ -34,10 +34,9 @@ yarn-error.*
 .env*
 !.env.example
 
-# local documentation
-/README.md
-/AGENTS.md
-/docs/
+# private documentation (publish PRODUCT_SPEC.md only)
+/docs/*
+!/docs/PRODUCT_SPEC.md
 
 # typescript
 *.tsbuildinfo
@@ -55,3 +54,5 @@ example
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+.prettierignore

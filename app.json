@@ -8,7 +8,13 @@
     "scheme": "yeojeong",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "CFBundleLocalizations": [
+          "ko",
+          "en"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +23,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.bsj.Yeojeong"
     },
     "web": {
       "output": "static",
@@ -53,6 +60,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6948104c-c7ce-412c-9fe3-8dfed76e45c4"
+      }
     }
   }
 }
